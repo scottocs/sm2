@@ -137,29 +137,7 @@ func main() { //SM2_KeyEX_SelfTest
 }
 
 //var SM3_len int = 256
-func memcpy ( buf1 []uint8, buf2 []uint8,count int) {
 
-	if count == 0{
-		return ;
-	}
-	var i int =0
-	for i < count  {
-		buf1[i]=buf2[i]
-	}
-}
-
-func memcmp ( buf1 []uint8, buf2 []uint8,count int) int {
-
-	if count == 0{
-		return 0;
-	}
-	var i int =0
-
-	for buf1[i] == buf2[i]  {
-		i ++
-	}
-	return int(buf1[i] - buf2[i])
-}
 
 func SM2_KeyEx_Re_II(V *Epoint, RA *Epoint, RB *Epoint, ZA []uint8, ZB []uint8, SA []uint8) int {
 	var x1, y1, x2, y2, Vx, Vy Big

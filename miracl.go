@@ -5,6 +5,29 @@ import (
 	"reflect"
 )
 
+func memcpy ( buf1 []uint8, buf2 []uint8,count int) {
+
+	if count == 0{
+		return ;
+	}
+	var i int =0
+	for i < count  {
+		buf1[i]=buf2[i]
+	}
+}
+
+func memcmp ( buf1 []uint8, buf2 []uint8,count int) int {
+
+	if count == 0{
+		return 0;
+	}
+	var i int =0
+
+	for buf1[i] == buf2[i]  {
+		i ++
+	}
+	return int(buf1[i] - buf2[i])
+}
 func compare(x, y Big) int {
 	var m, n, sig int
 	var sx, sy uint32
