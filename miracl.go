@@ -4,11 +4,119 @@ import (
 	"fmt"
 	"reflect"
 )
+type Bigtype struct {
+	len uint32
+	w   []uint32
+}
+type Big *Bigtype
+
+type Epoint struct {
+	marker int
+	X      Big
+	Y      Big
+	Z      Big
+}
+
+type FILE struct {
+	ptr      *uint8
+	cnt      int
+	base     *uint8
+	flag     int
+	file     int
+	charbuf  int
+	bufsiz   int
+	tmpfname *uint8
+}
+
+type small_chinese struct {
+	C  *int
+	V  *int
+	M  *int
+	NP int
+}
+type Miracl struct {
+	base   uint32 /* number base     */
+	apbase uint32 /* apparent base   */
+	pack   int    /* packing density */
+	lg2b   int    /* bits in base    */
+	base2  uint32 /* 2^mr_lg2b          */
+	user   *int   /* pointer to user supplied function */
+
+	nib int /* length of bigs  */
+
+	depth int     /* error tracing ..*/
+	trace [24]int /* .. mechanism    */
+
+	check  int /* overflow check  */
+	fout   int /* Output to file   */
+	fin    int /* Input from file  */
+	active int
+
+	infile *FILE /* Input file       */
+	otfile *FILE /* Output file      */
+
+	ira    [37]uint32 /* random number...   */
+	rndptr int        /* ...array & pointer */
+	borrow uint32
+
+	/* Montgomery constants */
+	ndash   uint32
+	modulus Big
+	pR      Big
+	ACTIVE  int
+	MONTY   int
+
+	/* Elliptic Curve details   */
+	SS            int /* True for Super-Singular  */
+	KOBLITZ       int /* True for a Koblitz curve */
+	coord         int
+	Asize, Bsize  int
+	M, AA, BB, CC int /* for GF(2^m) curves */
+
+	logN                                       int /* constants for fast fourier fft multiplication */
+	nprimes, degree                            int
+	prime, cr                                  *int
+	inverse                                    *int
+	roots                                      **int
+	chin                                       small_chinese
+	const1, const2, const3                     int
+	msw, lsw                                   uint32
+	s1, s2, t                                  **int
+	wa, wb, wc                                 *int
+	same, first_one, debug                     int
+	w0, w1, w2, w3, w4, w5, w6, w7, w8         Big
+	w9, w10, w11, w12, w13, w14, w15, sru, one Big
+	A, B                                       Big
+
+	/* User modifiables */
+	IOBSIZ int /* size of i/o buffer */
+	ERCON  int /* error control   */
+	ERNUM  int /* last error code */
+	NTRY   int /* no. of tries for probablistic primality testing   */
+	INPLEN int /* input length               */
+	IOBASE int /* base for input and output */
+
+	EXACT  int    /* exact flag      */
+	RPOINT int    /* =ON for radix point, =OFF for fractions in output */
+	TRACER int    /* turns trace tracker on/off */
+	PRIMES *int   /* small primes array         */
+	IOBUFF *uint8 /* i/o buffer    */
+
+	workprec, stprec, RS, RD                int
+	D, db, n, p                             float32 //c is double
+	a, b, c, d, r, q, oldn, ndig            int
+	u, v, ku, kv                            uint32
+	last, carryon                           int
+	pi                                      Big
+	workspace                               *uint8
+	TWIST, qnr, cnr, pmod8, pmod9, NO_CARRY int
+}
+var Mr_mip *Miracl = &Miracl{}
 
 func memcpy ( buf1 []uint8, buf2 []uint8,count int) {
 
 	if count == 0{
-		return ;
+		return
 	}
 	var i int =0
 	for i < count  {
@@ -19,7 +127,7 @@ func memcpy ( buf1 []uint8, buf2 []uint8,count int) {
 func memcmp ( buf1 []uint8, buf2 []uint8,count int) int {
 
 	if count == 0{
-		return 0;
+		return 0
 	}
 	var i int =0
 
@@ -123,9 +231,11 @@ func prepare_monty(n Big) uint32 { /* prepare Montgomery modulus */
 		return uint32(0)
 	}
 	Mr_mip.w6.len = 2
+	Mr_mip.w6.w = make([]uint32,2,2)
 	Mr_mip.w6.w[0] = 0
 	Mr_mip.w6.w[1] = 1 /* w6 = base */
 	Mr_mip.w15.len = 1
+	Mr_mip.w15.w = make([]uint32,1,1)
 	Mr_mip.w15.w[0] = n.w[0]                             /* w15 = n mod base */
 	if invmodp(Mr_mip.w15, Mr_mip.w6, Mr_mip.w14) != 1 { /* problems */
 		mr_berror(19)
@@ -372,114 +482,6 @@ func Test_PubKey(pubKey *Epoint) uint32 {
 //	"math"
 //)
 //muldiv等一些函数在c源代码中其实并未定义，使用ifdef函数将其注释掉，因此我也不知道该怎么办
-type Bigtype struct {
-	len uint32
-	w   []uint32
-}
-type Big *Bigtype
-
-type Epoint struct {
-	marker int
-	X      Big
-	Y      Big
-	Z      Big
-}
-
-type FILE struct {
-	ptr      *uint8
-	cnt      int
-	base     *uint8
-	flag     int
-	file     int
-	charbuf  int
-	bufsiz   int
-	tmpfname *uint8
-}
-
-type small_chinese struct {
-	C  *int
-	V  *int
-	M  *int
-	NP int
-}
-type Miracl struct {
-	base   uint32 /* number base     */
-	apbase uint32 /* apparent base   */
-	pack   int    /* packing density */
-	lg2b   int    /* bits in base    */
-	base2  uint32 /* 2^mr_lg2b          */
-	user   *int   /* pointer to user supplied function */
-
-	nib int /* length of bigs  */
-
-	depth int     /* error tracing ..*/
-	trace [24]int /* .. mechanism    */
-
-	check  int /* overflow check  */
-	fout   int /* Output to file   */
-	fin    int /* Input from file  */
-	active int
-
-	infile *FILE /* Input file       */
-	otfile *FILE /* Output file      */
-
-	ira    [37]uint32 /* random number...   */
-	rndptr int        /* ...array & pointer */
-	borrow uint32
-
-	/* Montgomery constants */
-	ndash   uint32
-	modulus Big
-	pR      Big
-	ACTIVE  int
-	MONTY   int
-
-	/* Elliptic Curve details   */
-	SS            int /* True for Super-Singular  */
-	KOBLITZ       int /* True for a Koblitz curve */
-	coord         int
-	Asize, Bsize  int
-	M, AA, BB, CC int /* for GF(2^m) curves */
-
-	logN                                       int /* constants for fast fourier fft multiplication */
-	nprimes, degree                            int
-	prime, cr                                  *int
-	inverse                                    *int
-	roots                                      **int
-	chin                                       small_chinese
-	const1, const2, const3                     int
-	msw, lsw                                   uint32
-	s1, s2, t                                  **int
-	wa, wb, wc                                 *int
-	same, first_one, debug                     int
-	w0, w1, w2, w3, w4, w5, w6, w7, w8         Big
-	w9, w10, w11, w12, w13, w14, w15, sru, one Big
-	A, B                                       Big
-
-	/* User modifiables */
-	IOBSIZ int /* size of i/o buffer */
-	ERCON  int /* error control   */
-	ERNUM  int /* last error code */
-	NTRY   int /* no. of tries for probablistic primality testing   */
-	INPLEN int /* input length               */
-	IOBASE int /* base for input and output */
-
-	EXACT  int    /* exact flag      */
-	RPOINT int    /* =ON for radix point, =OFF for fractions in output */
-	TRACER int    /* turns trace tracker on/off */
-	PRIMES *int   /* small primes array         */
-	IOBUFF *uint8 /* i/o buffer    */
-
-	workprec, stprec, RS, RD                int
-	D, db, n, p                             float32 //c is double
-	a, b, c, d, r, q, oldn, ndig            int
-	u, v, ku, kv                            uint32
-	last, carryon                           int
-	pi                                      Big
-	workspace                               *uint8
-	TWIST, qnr, cnr, pmod8, pmod9, NO_CARRY int
-}
-
 
 
 func mirvar_mem_variable(mem *uint8, index int, sz int) Big {
@@ -878,21 +880,50 @@ func mr_lent(x Big) int {
 	return int((lx & (0xffff)) + ((lx >> (16)) & (0xffff)))
 }
 
+func copy(x,y Big) { /* copy x to y: y=x  */
+	var i, nx, ny int
+	var gx, gy []uint32
+	if x == y || y == nil {
+		y = &Bigtype{0,nil}
+	}
+
+	if x == nil {
+		zero(y)
+		return
+	}
+
+	ny = int(len(y.w))
+	nx = int(len(x.w))
+	if nx>ny {
+		y.w = make([]uint32, nx, nx)
+	}else{
+		y.w = make([]uint32, ny, ny)
+	}
+	gx = x.w
+	gy = y.w
+
+	for i = nx; i < ny; i++ {
+		gy[i] = 0
+	}
+	for i = 0; i < nx; i++ {
+		gy[i] = gx[i]
+		y.len = x.len
+	}
+}
 func zero(x Big) { /* set big/flash number to zero */
-	//fmt.Println(x)
-	var i, n int
+	var i,n int
 	var g []uint32
-	//if x==NULL {//无法解决big和null
-	//	return
-	//}
-	n = mr_lent(x)
-	g = x.w
-	for i = 0; i < n; i++ {
+	if x==nil {
+		return
+	}
+	n=mr_lent(x)
+	n=int(x.len)
+	g=x.w
+	for i=0;i<n;i++ {
 		g[i] = 0 //此处未决
 	}
-	x.len = 0
+	x.len=0
 }
-
 func mr_lzero(x Big) { /*  strip leading zeros from big number  */
 	var s uint32
 	var m int
@@ -961,6 +992,8 @@ func mr_psub(x, y, z Big) { /*  subtract two Big numbers z=x-y      *
 		ly = lx
 	}
 	z.len = uint32(lx)
+	y.w = make([]uint32,ly,ly)
+	z.w = make([]uint32,z.len,z.len)
 	gx = x.w
 	gy = y.w
 	gz = z.w
@@ -1113,7 +1146,7 @@ func Divide(x, y, z Big) {
 	if Mr_mip.ERNUM != 0 {
 		return
 	}
-	w0 = Mr_mip.w0
+	w0 =Mr_mip.w0
 
 	MR_IN(6)
 	if x == y { //都是错误声明
@@ -1216,7 +1249,7 @@ func Divide(x, y, z Big) {
 				if ra < ldy {
 					carry = 1
 				}
-			} else { /*attemp=muldvm(w0.w[k+1],w0.w[k],ldy,&ra)*/
+			} else { attemp=muldvm(w0.w[k+1],w0.w[k],ldy,&ra)
 			}
 			for carry == 0 {
 				tst = muldvd(sdy, attemp, uint32(0), &r)
@@ -1493,32 +1526,6 @@ func insign(s int, x Big) {
 	}
 }
 
-func copy(x, y Big) { /* copy x to y: y=x  */
-	var i, nx, ny int
-	var gx, gy []uint32
-	if x == y || y == nil {
-		return
-	}
-
-	if x == nil {
-		zero(y)
-		return
-	}
-
-	ny = mr_lent(y)
-	nx = mr_lent(x)
-
-	gx = x.w
-	gy = y.w
-
-	for i = nx; i < ny; i++ {
-		gy[i] = 0
-	}
-	for i = 0; i < nx; i++ {
-		gy[i] = gx[i]
-		y.len = x.len
-	}
-}
 
 func uconvert(n uint32, x Big) { /*  convert unsigned integer n to big number format  */
 	var m int
@@ -1529,7 +1536,12 @@ func uconvert(n uint32, x Big) { /*  convert unsigned integer n to big number fo
 	}
 	m = 0
 	if Mr_mip.base == 0 {
-		x.w[m] = uint32(n)
+		if len(x.w)<=m{
+			x.w = make([]uint32,m+1,m+1)
+			x.w[m] = uint32(n)
+		}else{
+			x.w[m] = uint32(n)
+		}
 		m++
 	} else {
 		for n > 0 {
@@ -1587,8 +1599,9 @@ func mr_notint(x Big) bool { /* returns TRUE if x is Flash */
 	return false
 }
 
-func mr_padd(x, y, z Big) { /*  add two  big numbers, z=x+y where *
-	*  x and y are positive              */
+func mr_padd(x,y,z Big) {
+	/*  add two  big numbers, z=x+y where *
+   *  x and y are positive              */
 	var i, lx, ly, lz, la int
 	var carry, psum uint32
 	var gx, gy, gz []uint32
@@ -1615,12 +1628,13 @@ func mr_padd(x, y, z Big) { /*  add two  big numbers, z=x+y where *
 	}
 	carry = 0
 	z.len = uint32(lz)
+	//z.w = make([]uint32,z.len,z.len)
 	gx = x.w
 	gy = y.w
 	gz = z.w
-	if lz < Mr_mip.nib || (Mr_mip.check == 0) {
-		z.len++
-	}
+	//if lz < Mr_mip.nib || (Mr_mip.check == 0) {
+	//	z.len++
+	//}
 
 	if Mr_mip.base == 0 {
 		for i = 0; i < la; i++ { /* add by columns to length of the smaller number */
@@ -1641,7 +1655,7 @@ func mr_padd(x, y, z Big) { /*  add two  big numbers, z=x+y where *
 			}
 			gz[i] = psum
 		}
-		if carry != 0 { /* carry left over - possible overflow */
+		if carry!=0 { /* carry left over - possible overflow */
 			if (Mr_mip.check != 0) && i >= Mr_mip.nib {
 				//mr_berror(MR_ERR_OVERFLOW);
 				return
@@ -1667,7 +1681,7 @@ func mr_padd(x, y, z Big) { /*  add two  big numbers, z=x+y where *
 			}
 			gz[i] = psum
 		}
-		if carry != 0 { /* carry left over - possible overflow */
+		if carry!=0 { /* carry left over - possible overflow */
 			if (Mr_mip.check != 0) && i >= Mr_mip.nib {
 				//mr_berror(MR_ERR_OVERFLOW);
 				return
@@ -1679,32 +1693,36 @@ func mr_padd(x, y, z Big) { /*  add two  big numbers, z=x+y where *
 		z.len--
 	}
 }
-func muldvd2(a uint32, b uint32, c *uint32, rp *uint32) {
+
+func muldvd2(a uint32,b uint32,c *uint32,rp *uint32){
 	var dble doubleword
-	dble.d = uint64(a*b + *c + *rp)
-	*rp = dble.h[0]
-	*c = dble.h[1]
+	dble.d=uint64(a*b+*c+*rp)
+	dble.h[1]=uint32(dble.d>>32)
+	dble.h[0]=uint32(dble.d)
+	*rp=dble.h[0]
+	*c=dble.h[1]
 }
-func Multiply(x, y, z Big) { /*  multiply two big numbers: z=x.y  */
+func Multiply(x,y,z Big) { /*  multiply two big numbers: z=x.y  */
 	var i, xl, yl, j, ti int
 	var carry, sz uint32
-	//var  yg []uint32
-	var w0 Big
+	k := x.len+y.len
+	var w0 = &Bigtype{k,make([]uint32,k,k)}
 
-	if Mr_mip.ERNUM != 0 {
+
+	if Mr_mip.ERNUM!=0 {
 		return
 	}
 	if y.len == 0 || x.len == 0 {
 		zero(z)
 		return
 	}
-	if x != Mr_mip.w5 && y != Mr_mip.w5 && z == Mr_mip.w5 {
-		w0 = Mr_mip.w5
-	} else {
-		w0 = Mr_mip.w0
-	} /* local pointer */
+	//if x != Mr_mip.w5 && y != Mr_mip.w5 && z == Mr_mip.w5 {
+	//	w0 = Mr_mip.w5
+	//} else {
+	//	w0 = Mr_mip.w0
+	//} /* local pointer */
 
-	MR_IN(5)
+	//MR_IN(5)
 
 	if mr_notint(x) || mr_notint(y) {
 		//mr_berror(MR_ERR_INT_OP)
@@ -1716,7 +1734,7 @@ func Multiply(x, y, z Big) { /*  multiply two big numbers: z=x.y  */
 	xl = (int)(x.len & (1<<31 - 1))
 	yl = (int)(y.len & (1<<31 - 1))
 	zero(w0)
-	if Mr_mip.check != 0 {
+	if Mr_mip.check!=0 {
 		if (xl + yl) > Mr_mip.nib {
 			//mr_berror(3)
 			Mr_mip.depth--
@@ -1725,6 +1743,7 @@ func Multiply(x, y, z Big) { /*  multiply two big numbers: z=x.y  */
 	}
 
 	if Mr_mip.base == 0 {
+		//var xg, yg, w0g []uint32
 		//xg = x.w
 		//yg = y.w
 		//w0g = w0.w
@@ -1732,7 +1751,7 @@ func Multiply(x, y, z Big) { /*  multiply two big numbers: z=x.y  */
 			for i = 0; i < xl-1; i++ { /* long multiplication */
 				carry = 0
 				for j = i + 1; j < xl; j++ { /* Only do above the diagonal */
-					muldvd2(x.w[i], x.w[j], &carry, &w0.w[i+j])
+					muldvd2(x.w[i],x.w[j],&carry,&w0.w[i+j])
 				}
 				w0.w[xl+i] = carry
 			}
@@ -1741,7 +1760,7 @@ func Multiply(x, y, z Big) { /*  multiply two big numbers: z=x.y  */
 			carry = 0
 			for i = 0; i < xl; i++ { /* add in squared elements */
 				ti = i + i
-				muldvd2(x.w[i], x.w[i], &carry, &w0.w[ti])
+				muldvd2(x.w[i],x.w[i],&carry,&w0.w[ti])
 				w0.w[ti+1] += carry
 				if w0.w[ti+1] < carry {
 					carry = 1
@@ -1756,10 +1775,11 @@ func Multiply(x, y, z Big) { /*  multiply two big numbers: z=x.y  */
 
 				carry = 0
 				for j = 0; j < yl; j++ {
-					muldvd2(x.w[i], y.w[j], &carry, &w0.w[i+j])
+					muldvd2(x.w[i],y.w[j],&carry,&w0.w[i+j])
 				}
 				w0.w[yl+i] = carry
 			}
+			w0.len = uint32(xl + xl - 1)
 		}
 	} else {
 		if x == y && xl > 5 { /* squaring can be done nearly twice as fast */
@@ -1767,7 +1787,7 @@ func Multiply(x, y, z Big) { /*  multiply two big numbers: z=x.y  */
 				carry = 0
 				for j = i + 1; j < xl; j++ { /* Only do above the diagonal */
 
-					carry = muldiv(x.w[i], x.w[j], w0.w[i+j]+carry, Mr_mip.base, &w0.w[i+j])
+					carry=muldiv(x.w[i],x.w[j],w0.w[i+j]+carry,Mr_mip.base,&w0.w[i+j])
 
 				}
 				w0.w[xl+i] = carry
@@ -1778,7 +1798,7 @@ func Multiply(x, y, z Big) { /*  multiply two big numbers: z=x.y  */
 			for i = 0; i < xl; i++ { /* add in squared elements */
 				ti = i + i
 
-				carry = muldiv(x.w[i], x.w[i], w0.w[ti]+carry, Mr_mip.base, &w0.w[ti])
+				carry=muldiv(x.w[i],x.w[i],w0.w[ti]+carry,Mr_mip.base,&w0.w[ti])
 
 				w0.w[ti+1] += carry
 				carry = 0
@@ -1791,13 +1811,13 @@ func Multiply(x, y, z Big) { /*  multiply two big numbers: z=x.y  */
 			for i = 0; i < xl; i++ { /* long multiplication */
 				carry = 0
 				for j = 0; j < yl; j++ { /* multiply each digit of y by x[i] */
-					carry = muldiv(x.w[i], y.w[j], w0.w[i+j]+carry, Mr_mip.base, &w0.w[i+j])
+					carry=muldiv(x.w[i],y.w[j],w0.w[i+j]+carry,Mr_mip.base,&w0.w[i+j])
 				}
 				w0.w[yl+i] = carry
 			}
 		}
 	}
-	w0.len = sz | uint32(xl+yl) /* set length and sign of result */
+	w0.len = sz | uint32(xl + yl) /* set length and sign of result */
 	mr_lzero(w0)
 	copy(w0, z)
 	Mr_mip.depth--
@@ -3170,19 +3190,22 @@ func muldiv(a uint32, b uint32, c uint32, m uint32, rp *uint32) uint32 {
 	return q
 }
 
-func muldvm(a uint32, c uint32, m uint32, rp *uint32) uint32 {
+func muldvm(a uint32,c uint32,m uint32,rp *uint32)uint32 {
 	var q uint32
 	var dble doubleword
 	dble.h[0] = c
 	dble.h[1] = a
+	dble.d = uint64(c)<<32 + uint64(a)
 	q = uint32(dble.d / uint64(m))
 	*rp = uint32(dble.d - uint64(q*m))
 	return q
 }
 
-func muldvd(a uint32, b uint32, c uint32, rp *uint32) uint32 {
+func muldvd(a uint32,b uint32,c uint32,rp *uint32)uint32 {
 	var dble doubleword
-	dble.d = uint64(a*b + c)
+	dble.d = uint64(a*b+c)
+	dble.h[1]=uint32(dble.d>>32)
+	dble.h[0]=uint32(dble.d)
 	*rp = dble.h[0]
 	return dble.h[1]
 }
@@ -3891,10 +3914,9 @@ func ecurve_mult(e Big, pa *Epoint, pt *Epoint) int { /* pt=e*pa; */
 }
 
 func Mirsys(nd int, nb uint32) *Miracl {
-	//Mr_mip = mr_first_alloc()
-	//Mr_mip = get_mip()
+	Mr_mip = mr_first_alloc()
+	Mr_mip = get_mip()
 	return mirsys_basic(Mr_mip, nd, nb)
-	// return &Miracl{}
 }
 
 func mr_first_alloc() *Miracl {
