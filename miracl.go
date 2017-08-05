@@ -885,36 +885,7 @@ func mr_lent(x Big) int {
 	return int((lx & (0xffff)) + ((lx >> (16)) & (0xffff)))
 }
 
-func copy(x,y Big) { /* copy x to y: y=x  */
-	var i, nx, ny int
-	var gx, gy []uint32
-	if x == y || y == nil {
-		y = &Bigtype{0,nil}
-	}
 
-	if x == nil {
-		zero(y)
-		return
-	}
-
-	ny = int(len(y.w))
-	nx = int(len(x.w))
-	if nx>ny {
-		y.w = make([]uint32, nx, nx)
-	}else{
-		y.w = make([]uint32, ny, ny)
-	}
-	gx = x.w
-	gy = y.w
-
-	for i = nx; i < ny; i++ {
-		gy[i] = 0
-	}
-	for i = 0; i < nx; i++ {
-		gy[i] = gx[i]
-		y.len = x.len
-	}
-}
 func zero(x Big) { /* set big/flash number to zero */
 	var i,n int
 	var g []uint32
@@ -1531,7 +1502,7 @@ func insign(s int, x Big) {
 	}
 }
 
-<<<<<<< HEAD
+
 func copy(x, y Big) { /* copy x to y: y=x  */
 	var i, nx, ny int
 	//var gx, gy []uint32
@@ -1559,9 +1530,6 @@ func copy(x, y Big) { /* copy x to y: y=x  */
 		y.w[i] = x.w[i]
 	}
 }
-=======
->>>>>>> origin/master
-
 func uconvert(n uint32, x Big) { /*  convert unsigned integer n to big number format  */
 	var m int
 
