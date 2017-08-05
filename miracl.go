@@ -954,7 +954,7 @@ func mr_psub(x, y, z Big) { /*  subtract two Big numbers z=x-y      *
 	*  where x and y are positive and x>y  */
 	var i, lx, ly int
 	var borrow, pdiff uint32
-	var gx, gy, gz []uint32
+	//var gx, gy, gz []uint32
 
 	lx = int(x.len)
 	ly = int(y.len)
@@ -968,11 +968,11 @@ func mr_psub(x, y, z Big) { /*  subtract two Big numbers z=x-y      *
 		ly = lx
 	}
 	z.len = uint32(lx)
-	y.w = make([]uint32,ly,ly)
-	z.w = make([]uint32,z.len,z.len)
-	gx = x.w
-	gy = y.w
-	gz = z.w
+	//y.w = make([]uint32,ly,ly)
+	//z.w = make([]uint32,z.len,z.len)
+	//gx = x.w
+	//gy = y.w
+	//gz = z.w
 	borrow = 0
 
 	if Mr_mip.base == 0 {
@@ -981,13 +981,13 @@ func mr_psub(x, y, z Big) { /*  subtract two Big numbers z=x-y      *
 				//mr_berror(MR_ERR_NEG_RESULT);
 				return
 			}
-			pdiff = gx[i] - gy[i] - borrow
-			if pdiff < gx[i] {
+			pdiff = x.w[i] - y.w[i] - borrow
+			if pdiff < x.w[i] {
 				borrow = 0
-			} else if pdiff > gx[i] {
+			} else if pdiff > x.w[i] {
 				borrow = 1
 			}
-			gz[i] = pdiff
+			z.w[i] = pdiff
 		}
 	} else {
 		for i = 0; i < ly || borrow > 0; i++ { /* subtract by columns */
@@ -995,18 +995,18 @@ func mr_psub(x, y, z Big) { /*  subtract two Big numbers z=x-y      *
 				//mr_berror(MR_ERR_NEG_RESULT)
 				return
 			}
-			pdiff = gy[i] + borrow
+			pdiff = y.w[i] + borrow
 			borrow = 0
-			if gx[i] >= pdiff {
-				pdiff = gx[i] - pdiff
+			if x.w[i] >= pdiff {
+				pdiff = x.w[i] - pdiff
 			} else { /* set borrow */
-				pdiff = Mr_mip.base + gx[i] - pdiff
+				pdiff = Mr_mip.base + x.w[i] - pdiff
 				borrow = 1
 			}
-			gz[i] = pdiff
+			z.w[i] = pdiff
 		}
-		mr_lzero(z)
 	}
+	mr_lzero(z)
 }
 func mr_sdiv(x Big, sn uint32, z Big) uint32 {
 	var i, xl int
@@ -1052,7 +1052,11 @@ func mr_pmul(x Big, sn uint32, z Big) {
 	if Mr_mip.base == 0 {
 		//xg = x.w
 		//zg = z.w
+		z.w = append(z.w, make([]uint32,xl-int(z.len))...)
 		for m = 0; m < xl; m++ {
+			//if z.len < uint32(xl) {
+			//	z.w = append(z.w, 0)
+			//}
 			carry = muldvd(x.w[m], sn, carry, &z.w[m])
 		}
 		if carry > 0 {
@@ -1166,24 +1170,25 @@ func Divide(x, y, z Big) {
 				d++
 			}
 		}
-		if mr_compare(w0, y) < 0 { /*  x less than y - so x becomes remainder */
-			if x != z /* testing parameters */ {
-				copy(w0, x)
-				if x.len != 0 {
-					x.len |= sx
-				}
+	}
+	if mr_compare(w0, y) < 0 { /*  x less than y - so x becomes remainder */
+		if x != z /* testing parameters */ {
+			copy(w0, x)
+			if x.len != 0 {
+				x.len |= sx
 			}
-			if y != z {
-				zero(z)
-				z.w[0] = uint32(d)
-				if d > 0 {
-					z.len = sz | 1
-				}
-			}
-			y.len |= sy
-			Mr_mip.depth--
-			return
 		}
+		if y != z {
+			//zero(z)
+			//z.w[0] = uint32(d)
+			if d > 0 {
+				*z = Bigtype{sz | 1,make([]uint32,sz | 1)}
+				z.w[0] = uint32(d)
+			}
+		}
+		y.len |= sy
+		Mr_mip.depth--
+		return
 	}
 	if y0 == 1 {
 		r = mr_sdiv(w0, uint32(y.w[0]), w0)
@@ -1219,6 +1224,10 @@ func Divide(x, y, z Big) {
 		//yg = y.w
 		for k = w00 - 1; k >= y0-1; k-- {
 			carry = 0
+			if len(w0.w) < k+2{
+				w0.w = append(w0.w, make([]uint32,k+2 - len(w0.w))...)
+			}
+
 			if w0.w[k+1] == ldy /* guess next quotient digit */ {
 				attemp = 1 << (32 - 1)
 				ra = ldy + w0.w[k]
@@ -1364,7 +1373,7 @@ func Divide(x, y, z Big) {
 func mr_shift(x Big, n int, w Big) { /* set w=x.(mr_base^n) by shifting */
 	var s uint32
 	var i, bl int
-	var gw []uint32 = w.w
+	//var gw []uint32 = w.w
 
 	if Mr_mip.ERNUM != 0 {
 		return
@@ -1389,19 +1398,23 @@ func mr_shift(x Big, n int, w Big) { /* set w=x.(mr_base^n) by shifting */
 		return
 	}
 	if n > 0 {
+		//var aaaa []uint32 =
+		w.w = append(w.w, make([]uint32,bl-len(w.w))...)
+
 		for i = bl - 1; i >= n; i-- {
-			gw[i] = gw[i-n]
+
+			w.w[i] = w.w[i-n]
 		}
 		for i = 0; i < n; i++ {
-			gw[i] = 0
+			w.w[i] = 0
 		}
 	} else {
 		n = -n
 		for i = 0; i < bl; i++ {
-			gw[i] = gw[i+n]
+			w.w[i] = w.w[i+n]
 		}
 		for i = 0; i < n; i++ {
-			gw[bl+i] = 0
+			w.w[bl+i] = 0
 		}
 	}
 	w.len = uint32(bl) | s
@@ -1504,7 +1517,7 @@ func insign(s int, x Big) {
 
 
 func copy(x, y Big) { /* copy x to y: y=x  */
-	var i, nx, ny int
+	var i, nx int
 	//var gx, gy []uint32
 	if x == y || y == nil {
 		return
@@ -1515,15 +1528,15 @@ func copy(x, y Big) { /* copy x to y: y=x  */
 		return
 	}
 
-	ny = mr_lent(y)
+	//ny = mr_lent(y)
 	nx = mr_lent(x)
 
 	//gx = x.w
 	y.w = make([]uint32,nx)
 
-	for i = nx; i < ny; i++ {
-		y.w[i] = 0
-	}
+	//for i = nx; i < ny; i++ {
+	//	y.w[i] = 0
+	//}
 
 	y.len = x.len
 	for i = 0; i < nx; i++ {
@@ -1607,7 +1620,7 @@ func mr_padd(x,y,z Big) {
    *  x and y are positive              */
 	var i, lx, ly, lz, la int
 	var carry, psum uint32
-	var gx, gy, gz []uint32
+	//var gx, gy, gz []uint32
 
 	lx = int(x.len)
 	ly = int(y.len)
@@ -1632,67 +1645,69 @@ func mr_padd(x,y,z Big) {
 	carry = 0
 	z.len = uint32(lz)
 	//z.w = make([]uint32,z.len,z.len)
-	gx = x.w
-	gy = y.w
-	gz = z.w
-	//if lz < Mr_mip.nib || (Mr_mip.check == 0) {
-	//	z.len++
-	//}
+
+	if lz < Mr_mip.nib || (Mr_mip.check == 0) {
+		z.w = append(z.w, 0)
+		z.len++
+	}
+	//gx = x.w
+	//gy = y.w
+	//gz = z.w
 
 	if Mr_mip.base == 0 {
 		for i = 0; i < la; i++ { /* add by columns to length of the smaller number */
-			psum = gx[i] + gy[i] + carry
-			if psum > gx[i] {
+			psum = x.w[i] + y.w[i] + carry
+			if psum > x.w[i] {
 				carry = 0
-			} else if psum < gx[i] {
+			} else if psum < x.w[i] {
 				carry = 1
 			}
-			gz[i] = psum
+			z.w[i] = psum
 		}
 		for ; i < lz && carry > 0; i++ { /* add by columns to the length of larger number (if there is a carry) */
-			psum = gx[i] + gy[i] + carry
-			if psum > gx[i] {
+			psum = x.w[i] + y.w[i] + carry
+			if psum > x.w[i] {
 				carry = 0
-			} else if psum < gx[i] {
+			} else if psum < x.w[i] {
 				carry = 1
 			}
-			gz[i] = psum
+			z.w[i] = psum
 		}
 		if carry!=0 { /* carry left over - possible overflow */
 			if (Mr_mip.check != 0) && i >= Mr_mip.nib {
 				//mr_berror(MR_ERR_OVERFLOW);
 				return
 			}
-			gz[i] = carry
+			z.w[i] = carry
 		}
 	} else {
 		for i = 0; i < la; i++ { /* add by columns */
-			psum = gx[i] + gy[i] + carry
+			psum = x.w[i] + y.w[i] + carry
 			carry = 0
 			if psum >= Mr_mip.base { /* set carry */
 				carry = 1
 				psum -= Mr_mip.base
 			}
-			gz[i] = psum
+			z.w[i] = psum
 		}
 		for ; i < lz && carry > 0; i++ {
-			psum = gx[i] + gy[i] + carry
+			psum = x.w[i] + y.w[i] + carry
 			carry = 0
 			if psum >= Mr_mip.base { /* set carry */
 				carry = 1
 				psum -= Mr_mip.base
 			}
-			gz[i] = psum
+			z.w[i] = psum
 		}
 		if carry!=0 { /* carry left over - possible overflow */
 			if (Mr_mip.check != 0) && i >= Mr_mip.nib {
 				//mr_berror(MR_ERR_OVERFLOW);
 				return
 			}
-			gz[i] = carry
+			z.w[i] = carry
 		}
 	}
-	if gz[z.len-1] == 0 {
+	if z.w[z.len-1] == 0 {
 		z.len--
 	}
 }
@@ -1901,9 +1916,9 @@ func Add(x, y, z Big) { /* add two signed big numbers together z=x+y */
 	Mr_mip.depth--
 }
 
-func qdiv(u, v uint32) uint32 { /* fast division - small quotient expected.  */
-	var lq uint32 = u
-	var x uint32 = u
+func qdiv(u, v uint64) uint32 { /* fast division - small quotient expected.  */
+	var lq uint64 = u
+	var x uint64 = u
 
 	x -= v
 	if x < v {
@@ -1996,6 +2011,9 @@ type doubleword struct { //c语言的union我不知道该怎么转换好
 	d uint64
 	h [2]uint32
 }
+func (p *doubleword) setDFromH() {
+	p.d = uint64(p.h[1])<<32 + uint64(p.h[0])
+}
 
 func xgcd(x, y, xd, yd, z Big) int {
 	/* greatest common divisor by Euclids method  *
@@ -2010,7 +2028,7 @@ func xgcd(x, y, xd, yd, z Big) int {
 
 	//union doubleword uu,vv 源码的类型
 	var uu, vv doubleword
-	var u, v, lr uint32 //u long long c源码的类型难懂
+	var u, v, lr uint64 //u long long c源码的类型难懂
 
 	var last, dplus int = 1, 1
 	var t Big
@@ -2031,8 +2049,10 @@ func xgcd(x, y, xd, yd, z Big) int {
 	last = 0
 	a, b, c, d = 0, 0, 0, 0
 	iter = 0
-
+	var ccc int = 0
 	for size(Mr_mip.w2) != 0 {
+		ccc++
+
 		if b == 0 { /* update Mr_mip.w1 and Mr_mip.w2 */
 
 			Divide(Mr_mip.w1, Mr_mip.w2, Mr_mip.w5)
@@ -2081,17 +2101,24 @@ func xgcd(x, y, xd, yd, z Big) int {
 		n = int(Mr_mip.w1.len)
 		if n == 1 {
 			last = 1
-			u = Mr_mip.w1.w[0]
-			v = Mr_mip.w2.w[0]
+			u = uint64(Mr_mip.w1.w[0])
+			v = uint64(Mr_mip.w2.w[0])
 		} else {
+			if Mr_mip.w1.len < 2{
+				Mr_mip.w1.w = append(Mr_mip.w1.w, 0,0)
+			}
+			if Mr_mip.w2.len < 2{
+				Mr_mip.w2.w = append(Mr_mip.w2.w, 0,0)
+			}
+
 			m = Mr_mip.w1.w[n-1] + 1
 
 			if Mr_mip.base == 0 {
 				if n > 2 && m != 0 {
-					//uu.h[1] = muldvm(Mr_mip.w1.w[n-1], Mr_mip.w1.w[n-2], m, &sr)
-					//uu.h[0] = muldvm(sr, Mr_mip.w1.w[n-3], m, &sr)
-					//vv.h[1] = muldvm(Mr_mip.w2.w[n-1], Mr_mip.w2.w[n-2], m, &sr)
-					//vv.h[0] = muldvm(sr, Mr_mip.w2.w[n-3], m, &sr)
+					uu.h[1] = muldvm(Mr_mip.w1.w[n-1], Mr_mip.w1.w[n-2], m, &sr)
+					uu.h[0] = muldvm(sr, Mr_mip.w1.w[n-3], m, &sr)
+					vv.h[1] = muldvm(Mr_mip.w2.w[n-1], Mr_mip.w2.w[n-2], m, &sr)
+					vv.h[0] = muldvm(sr, Mr_mip.w2.w[n-3], m, &sr)
 				} else {
 					uu.h[1] = Mr_mip.w1.w[n-1]
 					uu.h[0] = Mr_mip.w1.w[n-2]
@@ -2101,20 +2128,21 @@ func xgcd(x, y, xd, yd, z Big) int {
 						last = 1
 					}
 				}
-
-				u = uint32(uu.d)
-				v = uint32(vv.d)
+				uu.setDFromH()
+				vv.setDFromH()
+				u = uint64(uu.d)
+				v = uint64(vv.d)
 
 			} else {
 
 				if n > 2 { /* squeeze out as much significance as possible */
-					u = muldiv(Mr_mip.w1.w[n-1], Mr_mip.base, Mr_mip.w1.w[n-2], m, &sr)
-					u = u*Mr_mip.base + muldiv(sr, Mr_mip.base, Mr_mip.w1.w[n-3], m, &sr)
-					v = muldiv(Mr_mip.w2.w[n-1], Mr_mip.base, Mr_mip.w2.w[n-2], m, &sr)
-					v = v*Mr_mip.base + muldiv(sr, Mr_mip.base, Mr_mip.w2.w[n-3], m, &sr)
+					u = uint64(muldiv(Mr_mip.w1.w[n-1], Mr_mip.base, Mr_mip.w1.w[n-2], m, &sr))
+					u = u*uint64(Mr_mip.base + muldiv(sr, Mr_mip.base, Mr_mip.w1.w[n-3], m, &sr))
+					v = uint64(muldiv(Mr_mip.w2.w[n-1], Mr_mip.base, Mr_mip.w2.w[n-2], m, &sr))
+					v = v*uint64(Mr_mip.base + muldiv(sr, Mr_mip.base, Mr_mip.w2.w[n-3], m, &sr))
 				} else {
-					u = uint32(Mr_mip.base*Mr_mip.w1.w[n-1] + Mr_mip.w1.w[n-2])
-					v = uint32(Mr_mip.base*Mr_mip.w2.w[n-1] + Mr_mip.w2.w[n-2])
+					u = uint64(uint32(Mr_mip.base*Mr_mip.w1.w[n-1] + Mr_mip.w1.w[n-2]))
+					v = uint64(uint32(Mr_mip.base*Mr_mip.w2.w[n-1] + Mr_mip.w2.w[n-2]))
 					last = 1
 				}
 			}
@@ -2135,28 +2163,28 @@ func xgcd(x, y, xd, yd, z Big) int {
 				}
 			} else {
 				if dplus != 0 {
-					if uint32(v-c) == 0 || uint32(v+d) == 0 {
+					if v-uint64(c) == 0 || v+uint64(d) == 0 {
 						break
 					}
 
-					q = qdiv(u+a, v-c)
+					q = qdiv(u+uint64(a), v-uint64(c))
 
 					if q == 0 {
 						break
 					}
 
-					if q != qdiv(u-b, v+d) {
+					if q != qdiv(u-uint64(b), v+uint64(d)) {
 						break
 					}
 				} else {
-					if uint32(v+c) == 0 || uint32(v-d) == 0 {
+					if v+uint64(c) == 0 || v-uint64(d) == 0 {
 						break
 					}
-					q = qdiv(u-a, v+c)
+					q = qdiv(u-uint64(a), v+uint64(c))
 					if q == 0 {
 						break
 					}
-					if q != qdiv(u+b, v-d) {
+					if q != qdiv(u+uint64(b), v-uint64(d)) {
 						break
 					}
 				}
@@ -2185,7 +2213,7 @@ func xgcd(x, y, xd, yd, z Big) int {
 				r = b + q*d
 				b = d
 				d = r
-				lr = u - q*v
+				lr = u - uint64(q)*v
 				u = v
 				v = lr
 			}
@@ -3198,7 +3226,8 @@ func muldvm(a uint32,c uint32,m uint32,rp *uint32)uint32 {
 	var dble doubleword
 	dble.h[0] = c
 	dble.h[1] = a
-	dble.d = uint64(c)<<32 + uint64(a)
+	//dble.d = uint64(a)<<32 + uint64(c)
+	dble.setDFromH()
 	q = uint32(dble.d / uint64(m))
 	*rp = uint32(dble.d - uint64(q*m))
 	return q
