@@ -874,7 +874,12 @@ func Mirvar(iv int) Big { //未实现
 
 func mr_lent(x Big) int {
 	var lx uint32
-	lx = x.len & uint32(1<<31)
+	// MR_IBITS 32
+	//#define MR_MSBIT ((unsigned int)1<<(MR_IBITS-1))
+	//#define MR_OBITS (MR_MSBIT-1)
+	//lx=(x->len&(MR_OBITS));
+	var mr_msbit uint32 = (uint32(1)<<31)
+	lx = x.len & (mr_msbit - 1)
 	return int((lx & (0xffff)) + ((lx >> (16)) & (0xffff)))
 }
 
@@ -1495,7 +1500,7 @@ func insign(s int, x Big) {
 
 func copy(x, y Big) { /* copy x to y: y=x  */
 	var i, nx, ny int
-	var gx, gy []uint32
+	//var gx, gy []uint32
 	if x == y || y == nil {
 		return
 	}
@@ -1508,15 +1513,16 @@ func copy(x, y Big) { /* copy x to y: y=x  */
 	ny = mr_lent(y)
 	nx = mr_lent(x)
 
-	gx = x.w
-	gy = y.w
+	//gx = x.w
+	y.w = make([]uint32,nx)
 
 	for i = nx; i < ny; i++ {
-		gy[i] = 0
+		y.w[i] = 0
 	}
+
+	y.len = x.len
 	for i = 0; i < nx; i++ {
-		gy[i] = gx[i]
-		y.len = x.len
+		y.w[i] = x.w[i]
 	}
 }
 
