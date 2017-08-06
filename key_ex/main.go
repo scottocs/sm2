@@ -1,5 +1,6 @@
 package main
 
+
 var ECC_WORDSIZE uint32 = 8
 var SM2_NUMBITS int = 256
 var SM2_NUMWORD int = 32
@@ -74,6 +75,17 @@ func main() { //SM2_KeyEX_SelfTest
 	var KA = [128 / 8]uint8{0}
 	var KB = [128 / 8]uint8{0}
 	var SA = [256 / 8]uint8{0}
+	//var borrrow uint32 = 0
+	//var p uint32
+	//fmt.Println(muldvd(1<<32-1,1<<32-1,0,&p),p);
+	//fmt.Println(muldvd(1<<32-1,0,0,&p),p);
+	//fmt.Println(muldvd(1,1<<32-1,0,&p),p);
+	//fmt.Println(muldvd(1,1,0,&p),p);
+	//fmt.Println(muldvd(1,1,1,&p),p);
+	//fmt.Println(muldvd(1<<32-1,0,1,&p),p);
+	//fmt.Println(muldvd(1<<32-1,1<<32-1,1<<32-1,&p),p);
+	//fmt.Println(muldvd(1<<32-1,0,1<<32-1,&p),p);
+
 
 	Mr_mip = Mirsys(1000, 16)
 	//Mr_mip = *mip

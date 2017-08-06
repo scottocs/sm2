@@ -977,9 +977,13 @@ func mr_psub(x, y, z Big) { /*  subtract two Big numbers z=x-y      *
 
 	if Mr_mip.base == 0 {
 		for i = 0; i < ly || borrow > 0; i++ { /* subtract by columns */
+
 			if i > lx {
 				//mr_berror(MR_ERR_NEG_RESULT);
 				return
+			}
+			if i>=ly{
+				y.w = append(y.w,make([]uint32,lx - len(y.w))...)
 			}
 			pdiff = x.w[i] - y.w[i] - borrow
 			if pdiff < x.w[i] {
@@ -994,6 +998,9 @@ func mr_psub(x, y, z Big) { /*  subtract two Big numbers z=x-y      *
 			if i > lx {
 				//mr_berror(MR_ERR_NEG_RESULT)
 				return
+			}
+			if i>=ly{
+				y.w = append(y.w,make([]uint32,lx - len(y.w))...)
 			}
 			pdiff = y.w[i] + borrow
 			borrow = 0
@@ -1067,6 +1074,9 @@ func mr_pmul(x Big, sn uint32, z Big) {
 					return
 				}
 			}
+			if m > len(z.w)-1{
+				z.w = append(z.w, make([]uint32,m+1 - len(z.w))...)
+			}
 			z.w[m] = carry
 			z.len = uint32(m + 1)
 		} else {
@@ -1103,6 +1113,7 @@ func normalise(x, y Big) uint32 { /* normalise divisor */
 		if r == 0 {
 			norm = 1
 		} else { /*norm=muldvm(uint32(1),uint32(0),r,&r)*/
+			norm=muldvm(uint32(1),uint32(0),r,&r);
 		}
 		if norm != 1 {
 			mr_pmul(y, norm, y)
@@ -1229,12 +1240,13 @@ func Divide(x, y, z Big) {
 			}
 
 			if w0.w[k+1] == ldy /* guess next quotient digit */ {
-				attemp = 1 << (32 - 1)
+				attemp = 1 << 32 - 1
 				ra = ldy + w0.w[k]
 				if ra < ldy {
 					carry = 1
 				}
-			} else { attemp=muldvm(w0.w[k+1],w0.w[k],ldy,&ra)
+			} else {
+				attemp=muldvm(w0.w[k+1],w0.w[k],ldy,&ra)
 			}
 			for carry == 0 {
 				tst = muldvd(sdy, attemp, uint32(0), &r)
@@ -1252,11 +1264,12 @@ func Divide(x, y, z Big) {
 			if attemp > 0 {
 				borrow = 0
 				for i = 0; i < y0; i++ {
-					borrow = muldvd(attemp, y.w[i], borrow, &dig)
+					borrow = uint32(muldvd(attemp, y.w[i], borrow, &dig))
 					if w0.w[m+i] < dig {
 						borrow++
 					}
 					w0.w[m+i] -= dig
+					w0.w[m+i] += 0
 				}
 				if w0.w[k+1] < borrow { /* whoops! - over did it */
 					w0.w[k+1] = 0
@@ -1425,6 +1438,7 @@ func redc(x, y Big) { /* Montgomery's REDC function p. 520 */
 	/* also used to convert n-residues back to normal form */
 	var carry, delay_carry uint32
 	//var w0g,mg []uint32
+	var ndash ,m uint32
 	var i, j, rn, rn2 int
 	var w0, modulus Big
 	if Mr_mip.ERNUM != 0 {
@@ -1435,10 +1449,10 @@ func redc(x, y Big) { /* Montgomery's REDC function p. 520 */
 
 	w0 = Mr_mip.w0
 	modulus = Mr_mip.modulus
-	//ndash=Mr_mip.ndash
+	ndash=Mr_mip.ndash
 
 	copy(x, w0)
-	if Mr_mip.MONTY != 0 {
+	if Mr_mip.MONTY == 0 {
 		Divide(w0, modulus, modulus)
 		copy(w0, y)
 		Mr_mip.depth--
@@ -1451,12 +1465,15 @@ func redc(x, y Big) { /* Montgomery's REDC function p. 520 */
 	if Mr_mip.base == 0 {
 		//mg=modulus.w
 		//w0g=w0.w
+		if rn2 > len(w0.w){
+			w0.w = append(w0.w, make([]uint32,rn2 - len(w0.w))...)
+		}
 		for i = 0; i < rn; i++ {
-			//m=ndash*w0.w[i]
+			m=ndash*w0.w[i]
 			carry = 0 /* around the loop, w0[i]=0    */
 
 			for j = 0; j < rn; j++ {
-				//muldvd2(m,modulus.w[j],&carry,&w0.w[i+j]);
+				muldvd2(m,modulus.w[j],&carry,&w0.w[i+j]);
 			}
 			w0.w[rn+i] += delay_carry
 			if w0.w[rn+i] < delay_carry {
@@ -1483,6 +1500,9 @@ func redc(x, y Big) { /* Montgomery's REDC function p. 520 */
 				delay_carry = 1
 			}
 		}
+	}
+	if rn2 > len(w0.w)-1{
+		w0.w = append(w0.w, make([]uint32,rn2+1 - len(w0.w))...)
 	}
 	w0.w[rn2] = delay_carry
 	w0.len = uint32(rn2 + 1)
@@ -1532,6 +1552,9 @@ func copy(x, y Big) { /* copy x to y: y=x  */
 	nx = mr_lent(x)
 
 	//gx = x.w
+	if len(y.w) < nx{
+		y.w = append(y.w, make([]uint32,nx-len(y.w))...)
+	}
 	y.w = make([]uint32,nx)
 
 	//for i = nx; i < ny; i++ {
@@ -1712,19 +1735,11 @@ func mr_padd(x,y,z Big) {
 	}
 }
 
-func muldvd2(a uint32,b uint32,c *uint32,rp *uint32){
-	var dble doubleword
-	dble.d=uint64(a*b+*c+*rp)
-	dble.h[1]=uint32(dble.d>>32)
-	dble.h[0]=uint32(dble.d)
-	*rp=dble.h[0]
-	*c=dble.h[1]
-}
 func Multiply(x,y,z Big) { /*  multiply two big numbers: z=x.y  */
 	var i, xl, yl, j, ti int
 	var carry, sz uint32
-	k := x.len+y.len
-	var w0 = &Bigtype{k,make([]uint32,k,k)}
+	//k := x.len+y.len
+	var w0 Big
 
 
 	if Mr_mip.ERNUM!=0 {
@@ -1734,13 +1749,14 @@ func Multiply(x,y,z Big) { /*  multiply two big numbers: z=x.y  */
 		zero(z)
 		return
 	}
-	//if x != Mr_mip.w5 && y != Mr_mip.w5 && z == Mr_mip.w5 {
-	//	w0 = Mr_mip.w5
-	//} else {
-	//	w0 = Mr_mip.w0
-	//} /* local pointer */
 
-	//MR_IN(5)
+	if x != Mr_mip.w5 && y != Mr_mip.w5 && z == Mr_mip.w5 {
+		w0 = Mr_mip.w5
+	} else {
+		w0 = Mr_mip.w0
+	} /* local pointer */
+
+	MR_IN(5)
 
 	if mr_notint(x) || mr_notint(y) {
 		//mr_berror(MR_ERR_INT_OP)
@@ -1788,6 +1804,10 @@ func Multiply(x,y,z Big) { /*  multiply two big numbers: z=x.y  */
 			}
 
 		} else {
+			if yl + xl > len(w0.w){
+				w0.w=append(w0.w, make([]uint32,yl+xl-len(w0.w))...)
+			}
+
 			for i = 0; i < xl; i++ { /* long multiplication */
 				/* inline - substitutes for loop below */
 
@@ -2819,6 +2839,9 @@ func logb2(x Big) int { /* returns number of bits in x */
 }
 
 func mr_testbit(x Big, n int) int {
+	if n/Mr_mip.lg2b > len(x.w) - 1{
+		x.w = append(x.w, make([]uint32,int(n/Mr_mip.lg2b)+1 - len(x.w))...)
+	}
 	if x.w[n/Mr_mip.lg2b]&(uint32(1)<<uint32(n%Mr_mip.lg2b)) > 0 {
 		return 1
 	}
@@ -3224,6 +3247,9 @@ func muldiv(a uint32, b uint32, c uint32, m uint32, rp *uint32) uint32 {
 func muldvm(a uint32,c uint32,m uint32,rp *uint32)uint32 {
 	var q uint32
 	var dble doubleword
+	a = uint32(int32(a))
+	c = uint32(int32(c))
+	m = uint32(int32(m))
 	dble.h[0] = c
 	dble.h[1] = a
 	//dble.d = uint64(a)<<32 + uint64(c)
@@ -3233,14 +3259,62 @@ func muldvm(a uint32,c uint32,m uint32,rp *uint32)uint32 {
 	return q
 }
 
-func muldvd(a uint32,b uint32,c uint32,rp *uint32)uint32 {
+
+//func muldvm222(a int32,c int32,m int32,rp *uint32)int32 {
+//	var q int32
+//	var dble doubleword
+//	dble.h[0] = uint32(c)
+//	dble.h[1] = uint32(a)
+//	//dble.d = uint64(a)<<32 + uint64(c)
+//	dble.setDFromH()
+//	q = int32(dble.d / uint64(m))
+//	*rp = uint32(dble.d - uint64(q*m))
+//	return q
+//}
+
+func muldvd(a uint32,b uint32,c uint32,rp *uint32) uint32 {
+	//var dble doubleword
+
+	var d uint64 = uint64(a)*uint64(b)+uint64(c)
+	var borrow uint32 = 0
+	borrow = uint32(d/(1<<32))
+	//if d >= 4294967296{
+	//	borrow =d/
+	//}
+	*rp = uint32(d%(1<<32))
+	//dble.d = uint64()
+	//dble.h[1]=uint32(dble.d>>32)
+	//dble.h[0]=uint32(dble.d)
+	//*rp = uint32(int32(d))
+	return borrow
+}
+func muldvd2(a uint32,b uint32,c *uint32,rp *uint32){
 	var dble doubleword
-	dble.d = uint64(a*b+c)
+	//dble.d=uint64(a*b+*c+*rp)
+	dble.d=uint64(a)*uint64(b)+uint64(*c)+uint64(*rp)
 	dble.h[1]=uint32(dble.d>>32)
 	dble.h[0]=uint32(dble.d)
-	*rp = dble.h[0]
-	return dble.h[1]
+	*rp=dble.h[0]
+	*c=dble.h[1]
 }
+//func muldvd2(a uint32,b uint32,c *uint32,rp *uint32){
+//
+//	var d uint64 =uint64(a)*uint64(b)+uint64(*c)+uint64(*rp)
+//	*rp=uint32(d/(1<<32))
+//	*c=uint32(d%(1<<32))
+//}
+//func muldvd(a uint32,b uint32,c uint32,rp *uint32)uint32 {
+//	var dble doubleword
+//	a = uint32(int32(a))
+//	c = uint32(int32(c))
+//	b = uint32(int32(b))
+//
+//	dble.d = uint64(a*b+c)
+//	dble.h[1]=uint32(dble.d>>32)
+//	dble.h[0]=uint32(dble.d)
+//	*rp = dble.h[0]
+//	return dble.h[1]
+//}
 
 func epoint_copy(a, b *Epoint) {
 	if a == b || b == nil {
@@ -3285,7 +3359,7 @@ func epoint_negate(p *Epoint) { /* negate a point */
 //}
 
 func epoint_init_mem_variable(mem *uint8, index int, sz int) *Epoint {
-	var p *Epoint
+	var p *Epoint=&Epoint{2,&Bigtype{0,[]uint32{}},&Bigtype{0,[]uint32{}},&Bigtype{0,[]uint32{}}}
 	//var ptr *uint8
 	//var offset, r int
 	//
