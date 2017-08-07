@@ -394,14 +394,19 @@ func SM3_Z(ID []uint8, ELAN uint16, pubKey *Epoint, hash []uint8) {
 	var Py = [32]uint8{0}
 	var IDlen = [2]uint8{0}
 	var x, y Big
-	var md *SM3_STATE
+	var md *SM3_STATE=&SM3_STATE{}
 	x = Mirvar(0)
 	y = Mirvar(0)
 	Epoint_get(pubKey, x, y)
 	Big_to_bytes(32, x, Px[0:], true)
 	Big_to_bytes(32, y, Py[0:], true)
-	//memcpy(IDlen, &(unsigned char)ELAN + 1, 1);
-	//memcpy(IDlen + 1, &(unsigned char)ELAN, 1);
+	var di = []uint8{}
+	var gao = []uint8{}
+
+	di = append(di, uint8(ELAN%(uint16(1<<8))))
+	gao = append(gao, uint8(ELAN/(uint16(1<<8))))
+	memcpy(IDlen[0:], gao[0:], 1);
+	memcpy(IDlen[1:], di[0:], 1);
 	SM3_init(md)
 	SM3_process(md, IDlen[0:], 2)
 	SM3_process(md, ID, int(ELAN)/8)

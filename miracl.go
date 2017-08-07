@@ -121,6 +121,7 @@ func memcpy ( buf1 []uint8, buf2 []uint8,count int) {
 	var i int =0
 	for i < count  {
 		buf1[i]=buf2[i]
+		i++
 	}
 }
 
