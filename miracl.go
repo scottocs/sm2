@@ -1293,6 +1293,9 @@ func Divide(x, y, z Big) {
 			if k == w00-1 && attemp == 0 {
 				w00--
 			} else if y != z {
+				if m+1 > len(z.w){
+					z.w = append(z.w, make([]uint32,m+1-len(z.w))...)
+				}
 				z.w[m] = attemp
 			}
 		}
@@ -1688,6 +1691,12 @@ func mr_padd(x,y,z Big) {
 			}
 			z.w[i] = psum
 		}
+		if lz > len(x.w){
+			x.w = append(x.w,make([]uint32,lz-len(x.w))...)
+		}
+		if lz > len(y.w){
+			y.w = append(y.w,make([]uint32,lz-len(y.w))...)
+		}
 		for ; i < lz && carry > 0; i++ { /* add by columns to the length of larger number (if there is a carry) */
 			psum = x.w[i] + y.w[i] + carry
 			if psum > x.w[i] {
@@ -1783,13 +1792,13 @@ func Multiply(x,y,z Big) { /*  multiply two big numbers: z=x.y  */
 		//yg = y.w
 		//w0g = w0.w
 		if x == y && xl > 5 { /* fast squaring */
+			if yl + xl > len(w0.w){
+				w0.w=append(w0.w, make([]uint32,yl+xl-len(w0.w))...)
+			}
 			for i = 0; i < xl-1; i++ { /* long multiplication */
 				carry = 0
 				for j = i + 1; j < xl; j++ { /* Only do above the diagonal */
 					muldvd2(x.w[i],x.w[j],&carry,&w0.w[i+j])
-				}
-				if i + xl >= len(w0.w){
-					w0.w=append(w0.w, make([]uint32,i+xl-len(w0.w)+1)...)
 				}
 				w0.w[xl+i] = carry
 			}
