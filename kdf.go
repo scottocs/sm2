@@ -255,7 +255,7 @@ func SM3_256(buf []uint8, len int, hash []uint8) []uint8 {
 }
 
 func SM3_KDF(Z []uint8, zlen uint32, klen uint32, K []uint8) {
-	var i,  t uint32
+	var i,j,  t uint32
 	var bitklen uint32
 	var md SM3_STATE
 	var Ha [32]uint8
@@ -273,7 +273,7 @@ func SM3_KDF(Z []uint8, zlen uint32, klen uint32, K []uint8) {
 		SM3_process(&md, Z, int(zlen))
 		SM3_process(&md, ct[0:], 4)
 		SM3_done(&md, Ha[0:])
-		//memcpy((K + 32*(i-1)), Ha, 32)
+		memcpy(K[32*(i-1):], Ha[:], 32)
 		if ct[3] == 0xff {
 			ct[3] = 0
 			if ct[2] == 0xff {
@@ -298,9 +298,9 @@ func SM3_KDF(Z []uint8, zlen uint32, klen uint32, K []uint8) {
 	SM3_done(&md, Ha[0:])
 	if bitklen % 256!=0 {
 		i = (256 - bitklen + 256*(bitklen/256)) / 8
-		//j = (bitklen - 256*(bitklen/256)) / 8
-		//memcpy((K + 32*(t-1)), Ha, j)
+		j = (bitklen - 256*(bitklen/256)) / 8
+		memcpy(K[32*(t-1):], Ha[:], int(j))
 	} else {
-		//memcpy((K + 32*(t-1)), Ha, 32)
+		memcpy(K[32*(t-1):], Ha[:], 32)
 	}
 }

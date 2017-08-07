@@ -133,6 +133,9 @@ func memcmp ( buf1 []uint8, buf2 []uint8,count int) int {
 	var i int =0
 
 	for buf1[i] == buf2[i]  {
+		if i == count-1{
+			break
+		}
 		i ++
 	}
 	return int(buf1[i] - buf2[i])
@@ -1191,7 +1194,7 @@ func Divide(x, y, z Big) {
 			}
 		}
 		if y != z {
-			//zero(z)
+			zero(z)
 			//z.w[0] = uint32(d)
 			if d > 0 {
 				*z = Bigtype{sz | 1,make([]uint32,sz | 1)}
