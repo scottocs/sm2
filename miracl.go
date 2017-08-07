@@ -1788,6 +1788,9 @@ func Multiply(x,y,z Big) { /*  multiply two big numbers: z=x.y  */
 				for j = i + 1; j < xl; j++ { /* Only do above the diagonal */
 					muldvd2(x.w[i],x.w[j],&carry,&w0.w[i+j])
 				}
+				if i + xl >= len(w0.w){
+					w0.w=append(w0.w, make([]uint32,i+xl-len(w0.w)+1)...)
+				}
 				w0.w[xl+i] = carry
 			}
 			w0.len = uint32(xl + xl - 1)
