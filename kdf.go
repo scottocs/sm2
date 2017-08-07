@@ -56,12 +56,16 @@ type SM3_STATE struct {
 	buf    [64]uint8
 }
 
-func bitow(bi []uint32, w [68]uint32) [68]uint32 {
-	var i int
+func bitow(bi []uint8, w [68]uint32) [68]uint32 {
 	var tmp uint32
-
+	var i int = 0
+	var bi32 = make([]uint32, 16, 16)
+	for i != 16 {
+		bi32[i] = binary.LittleEndian.Uint32([]byte(bi[4*i : 4*i+4]))
+		i++
+	}
 	for i = 0; i <= 15; i++ {
-		w[i] = bi[i]
+		w[i] = bi32[i]
 	}
 	for i = 16; i <= 67; i++ {
 		tmp = w[i-16] ^ w[i-9] ^ SM3_rotl32(w[i-3], 15)
@@ -178,15 +182,8 @@ func SM3_init(md *SM3_STATE) {
 func SM3_compress(md *SM3_STATE) {
 	var w [68]uint32
 	var w1 [64]uint32
-	var i int = 0
-	var bufu32 = make([]uint32, 16, 16)
-
 	bigendian(md.buf[:], 64, md.buf[:])
-	for i != 16 {
-		bufu32[i] = binary.LittleEndian.Uint32([]byte(md.buf[4*i : 4*i+4]))
-		i++
-	}
-	w = bitow(bufu32, w)
+	w = bitow(md.buf[:], w)
 	w, w1 = wtow1(w, w1)
 	md.state = cf(w, w1, md.state)
 }
