@@ -146,7 +146,7 @@ func cf(w [68]uint32, w1 [64]uint32, v [8]uint32) [8]uint32 {
 	return v
 }
 
-func bigendian(src [64]uint8, bytelen uint32, des [64]uint8) [64]uint8 {
+func bigendian(src []uint8, bytelen uint32, des []uint8){
 	var tmp uint8 = 0
 	var i uint32 = 0
 
@@ -159,7 +159,6 @@ func bigendian(src [64]uint8, bytelen uint32, des [64]uint8) [64]uint8 {
 		des[4*i+1] = src[4*i+2]
 		des[4*i+2] = tmp
 	}
-	return des
 }
 
 func SM3_init(md *SM3_STATE) {
@@ -175,18 +174,18 @@ func SM3_init(md *SM3_STATE) {
 	md.state[7] = SM3_ivh
 }
 
+
 func SM3_compress(md *SM3_STATE) {
 	var w [68]uint32
 	var w1 [64]uint32
 	var i int = 0
 	var bufu32 = make([]uint32, 16, 16)
 
-	//md.buf = bigendian(md.buf, 64, md.buf)
+	bigendian(md.buf[:], 64, md.buf[:])
 	for i != 16 {
-		bufu32[i] = binary.BigEndian.Uint32([]byte(md.buf[4*i : 4*i+4]))
+		bufu32[i] = binary.LittleEndian.Uint32([]byte(md.buf[4*i : 4*i+4]))
 		i++
 	}
-
 	w = bitow(bufu32, w)
 	w, w1 = wtow1(w, w1)
 	md.state = cf(w, w1, md.state)
@@ -259,7 +258,7 @@ func SM3_256(buf []uint8, len int, hash []uint8) []uint8 {
 }
 
 func SM3_KDF(Z []uint8, zlen uint32, klen uint32, K []uint8) {
-	var i,j,  t uint32
+	var i,  t uint32
 	var bitklen uint32
 	var md SM3_STATE
 	var Ha [32]uint8
@@ -277,7 +276,7 @@ func SM3_KDF(Z []uint8, zlen uint32, klen uint32, K []uint8) {
 		SM3_process(&md, Z, int(zlen))
 		SM3_process(&md, ct[0:], 4)
 		SM3_done(&md, Ha[0:])
-		memcpy(K[32*(i-1):], Ha[:], 32)
+		//memcpy((K + 32*(i-1)), Ha, 32)
 		if ct[3] == 0xff {
 			ct[3] = 0
 			if ct[2] == 0xff {
@@ -302,9 +301,9 @@ func SM3_KDF(Z []uint8, zlen uint32, klen uint32, K []uint8) {
 	SM3_done(&md, Ha[0:])
 	if bitklen % 256!=0 {
 		i = (256 - bitklen + 256*(bitklen/256)) / 8
-		j = (bitklen - 256*(bitklen/256)) / 8
-		memcpy(K[32*(t-1):], Ha[:], int(j))
+		//j = (bitklen - 256*(bitklen/256)) / 8
+		//memcpy((K + 32*(t-1)), Ha, j)
 	} else {
-		memcpy(K[32*(t-1):], Ha[:], 32)
+		//memcpy((K + 32*(t-1)), Ha, 32)
 	}
 }
