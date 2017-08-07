@@ -989,6 +989,9 @@ func mr_psub(x, y, z Big) { /*  subtract two Big numbers z=x-y      *
 			if i>=ly{
 				y.w = append(y.w,make([]uint32,lx - len(y.w))...)
 			}
+			if i >= len(y.w){
+				y.w= append(y.w,make([]uint32,i-len(y.w)+1)...)
+			}
 			pdiff = x.w[i] - y.w[i] - borrow
 			if pdiff < x.w[i] {
 				borrow = 0
@@ -1742,6 +1745,9 @@ func mr_padd(x,y,z Big) {
 			}
 			z.w[i] = carry
 		}
+	}
+	if int(z.len-1)<=len(z.w){
+		z.w = append(z.w,0)
 	}
 	if z.w[z.len-1] == 0 {
 		z.len--
@@ -3923,7 +3929,7 @@ func ecurve_mult(e Big, pa *Epoint, pt *Epoint) int { /* pt=e*pa; */
 		return 0
 	}
 	copy(e, Mr_mip.w9)
-	/*    epoint_norm(pa); */
+	//epoint_norm(pa)
 	epoint_copy(pa, pt)
 
 	if size(Mr_mip.w9) < 0 { /* pt = -pt */

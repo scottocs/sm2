@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 var SM2_WORDSIZE int = 8
 var SM2_NUMBITS int = 256
 var SM2_NUMWORD int = 32
@@ -48,12 +50,12 @@ func SM2_Init () int {
 	ecurve_init(a, b, p, 0) //MR_PROJECTIVE为0？
 	G = Epoint_init()
 	nG = Epoint_init()
-	a, b, n, p, Gx, Gy = para_a, para_b, para_n, para_p, para_Gx, para_Gy
+	para_a, para_b, para_n, para_p, para_Gx, para_Gy = a, b, n, p, Gx, Gy
 	if Epoint_set(Gx, Gy, 0, G) == 0 { //initialise point G
 		return int(ERR_ECURVE_INIT)
 	}
 	ecurve_mult(n, G, nG)
-	if Point_at_infinity(nG) != 0 {
+	if Point_at_infinity(nG) == 0 {
 		//test if the order of the point is n
 		return int(ERR_ORDER)
 	}
@@ -192,6 +194,7 @@ func SM2_Sign(message []uint8,len int,ZA[]uint8,rand[]uint8,d[]uint8,R[]uint8,S[
 	KG = Epoint_init()
 	//step1,set M=ZA||M
 	//M = (char *)malloc(sizeof(char) * (M_len + 1)) 记号
+	M = make([]uint8,M_len+1)
 	memcpy(M, ZA, int(SM3_len)/8)
 	memcpy(M[SM3_len/8:], message, len)
 	//step2,generate e=H(M)
@@ -269,7 +272,7 @@ func SM2_Verify(message []uint8,len int,ZA[]uint8,Px[]uint8,Py[]uint8,R[]uint8,S
 		return int(ERR_OUTRANGE_S)
 	}
 	//step3,generate M
-	//M = (char *)malloc(sizeof(char) * (M_len + 1)) 记号
+	M = make([]uint8,M_len+1)
 	memcpy(M, ZA, 32)
 	memcpy(M[32:], message, len)
 	//step4,generate e=H(M)
@@ -307,23 +310,24 @@ func SM2_SelfCheck()int {
 	var rand = [32]uint8{0x59, 0x27, 0x6E, 0x27, 0xD5, 0x06, 0x86, 0x1A, 0x16, 0x68, 0x0F, 0x3A, 0xD9, 0xC0, 0x2D,
 						 0xCC, 0xEF, 0x3C, 0xC1, 0xFA, 0x3C, 0xDB, 0xE4, 0xCE, 0x6D, 0x54, 0xB8, 0x0D, 0xEA, 0xC1, 0xBC, 0x21}
 	//the public key
-	/* var xA[32]={0x09,0xf9,0xdf,0x31,0x1e,0x54,0x21,0xa1,0x50,0xdd,0x7d,0x16,0x1e,0x4b,0xc5,
+	 var xA=[32]uint8{0x09,0xf9,0xdf,0x31,0x1e,0x54,0x21,0xa1,0x50,0xdd,0x7d,0x16,0x1e,0x4b,0xc5,
 0xc6,0x72,0x17,0x9f,0xad,0x18,0x33,0xfc,0x07,0x6b,0xb0,0x8f,0xf3,0x56,0xf3,0x50,0x20};
-var yA[32]={0xcc,0xea,0x49,0x0c,0xe2,0x67,0x75,0xa5,0x2d,0xc6,0xea,0x71,0x8c,0xc1,0xaa,
-0x60,0x0a,0xed,0x05,0xfb,0xf3,0x5e,0x08,0x4a,0x66,0x32,0xf6,0x07,0x2d,0xa9,0xad,0x13};*/
-	var xA [32]uint8
-	var yA [32]uint8
+var yA=[32]uint8{0xcc,0xea,0x49,0x0c,0xe2,0x67,0x75,0xa5,0x2d,0xc6,0xea,0x71,0x8c,0xc1,0xaa,
+0x60,0x0a,0xed,0x05,0xfb,0xf3,0x5e,0x08,0x4a,0x66,0x32,0xf6,0x07,0x2d,0xa9,0xad,0x13};
+	//var xA [32]uint8
+	//var yA [32]uint8
 	var r [32]uint8
-	var s [32]uint8 // Signature
-	var IDA = [16]uint8{0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x31, 0x32, 0x33,
-						0x34, 0x35, 0x36, 0x37, 0x38} //ASCII code of userA's identification
-	var IDA_len int = 16
-	var ENTLA = [2]uint8{0x00, 0x80}      //the length of userA's identification,presentation in ASCII code
+	var s [32]uint8 // Signature424C 49 43 45 31 32 33 40 59 41 48 4F 4F 2E 43 4F 11
+	var IDA = [18]uint8{0x42, 0x4C, 0x49, 0x43, 0x45, 0x31, 0x32, 0x33, 0x40, 0x59, 0x41,
+						0x48, 0x4F, 0x4F, 0x2E, 0x43, 0x4F,0x11} //ASCII code of userA's identification
+	var IDA_len int = 18
+	var ENTLA = [2]uint8{0x00, 0x90}      //the length of userA's identification,presentation in ASCII code
 	str := "message digest"
 	var message =[]uint8(str) //the message to be signed
 	var len int = len(message)         //the length of message
 	var ZA [32]uint8                  //ZA=Hash(ENTLA|| IDA|| a|| b|| Gx || Gy || xA|| yA)
-	var Msg [210]uint8                         //210=IDA_len+2+SM2_NUMWORD*6
+	N := IDA_len+2+SM2_NUMWORD*6
+	var Msg = make([]uint8,N,N)                         //210=IDA_len+2+SM2_NUMWORD*6
 	var temp int
 	var mip *Miracl = Mirsys(10000, 16)
 	mip.IOBASE = 16
@@ -333,21 +337,26 @@ var yA[32]={0xcc,0xea,0x49,0x0c,0xe2,0x67,0x75,0xa5,0x2d,0xc6,0xea,0x71,0x8c,0xc
 	}
 	// ENTLA|| IDA|| a|| b|| Gx || Gy || xA|| yA
 	memcpy(Msg[:], ENTLA[:], 2)
-	memcpy(Msg[2:], IDA[:], IDA_len)
-	memcpy(Msg[2+IDA_len:], SM2_a[:], SM2_NUMWORD)
-	memcpy(Msg[2+IDA_len+SM2_NUMWORD:], SM2_b[:], SM2_NUMWORD)
-	memcpy(Msg[2+IDA_len+SM2_NUMWORD*2:], SM2_Gx[:], SM2_NUMWORD)
-	memcpy(Msg[2+IDA_len+SM2_NUMWORD*3:], SM2_Gy[:], SM2_NUMWORD)
-	memcpy(Msg[2+IDA_len+SM2_NUMWORD*4:], xA[:], SM2_NUMWORD)
-	memcpy(Msg[2+IDA_len+SM2_NUMWORD*5:], yA[:], SM2_NUMWORD)
-	SM3_256(Msg[:], 210, ZA[:])
+	memcpy(Msg[2:N], IDA[:], IDA_len)
+	memcpy(Msg[2+IDA_len:N], SM2_a[:], SM2_NUMWORD)
+	memcpy(Msg[2+IDA_len+SM2_NUMWORD:N], SM2_b[:], SM2_NUMWORD)
+	memcpy(Msg[2+IDA_len+SM2_NUMWORD*2:N], SM2_Gx[:], SM2_NUMWORD)
+	memcpy(Msg[2+IDA_len+SM2_NUMWORD*3:N], SM2_Gy[:], SM2_NUMWORD)
+	memcpy(Msg[2+IDA_len+SM2_NUMWORD*4:N], xA[:], SM2_NUMWORD)
+	memcpy(Msg[2+IDA_len+SM2_NUMWORD*5:N], yA[:], SM2_NUMWORD)
+	SM3_256(Msg[:], N, ZA[:])
 	temp = SM2_Sign(message, len, ZA[:], rand[:], dA[:], r[:], s[:])
 	if temp != 0 {
+		fmt.Print("s")
 		return temp
 	}
 	temp = SM2_Verify(message, len, ZA[:], xA[:], yA[:], r[:], s[:])
 	if temp != 0 {
+		fmt.Print("s")
 		return temp
 	}
+	fmt.Printf("%x\n",ZA)
+	fmt.Printf("%x\n",r)
+	fmt.Printf("%x\n",s)
 	return 0
 }
