@@ -1,7 +1,7 @@
 package main
 
 import "fmt"
-import "github.com/scottocs/sm2/src/kdf"
+import "github.com/scottocs/sm2/kdf"
 var ECC_WORDSIZE uint32 = 8
 var SM2_NUMBITS int = 256
 var SM2_NUMWORD int = 32
@@ -233,27 +233,12 @@ func SM2_Decrypt(dB kdf.Big,C[] uint8,Clen int,klen int,M[] uint8)uint32 {
 	kdf.SM3_process(&md, M, klen)
 	kdf.SM3_process(&md, x2y2[SM2_NUMWORD:], SM2_NUMWORD)
 	kdf.SM3_done(&md, hash[:])
-	if memcmp(hash[:],C[SM2_NUMWORD*2+klen:],SM2_NUMWORD)!=0 {
+	if kdf.Memcmp(hash[:],C[SM2_NUMWORD*2+klen:],SM2_NUMWORD)!=0 {
 		return ERR_C3_MATCH
 	} else {
 		return 0}
 }
 
-func memcmp ( buf1 []uint8, buf2 []uint8,count int) int {
-
-	if count == 0{
-		return 0
-	}
-	var i int =0
-
-	for buf1[i] == buf2[i]  {
-		if i == count-1{
-			break
-		}
-		i ++
-	}
-	return int(buf1[i] - buf2[i])
-}
 func SM2_ENC_SelfTest()uint32 {
 	var tmp int = 0
 	var Cipher = [115]uint8{0}
@@ -294,7 +279,7 @@ func SM2_ENC_SelfTest()uint32 {
 	kdf.Epoint_get(kG, x, y)
 	kdf.Big_to_bytes(SM2_NUMWORD, x, kGxy[:], true)
 	kdf.Big_to_bytes(SM2_NUMWORD, y, kGxy[SM2_NUMWORD:], true)
-	if memcmp(kGxy[:], std_pubKey[:], SM2_NUMWORD*2) != 0 {
+	if kdf.Memcmp(kGxy[:], std_pubKey[:], SM2_NUMWORD*2) != 0 {
 		return ERR_SELFTEST_KG
 	}
 	//encrypt data and compare the result with the standard data
@@ -306,7 +291,7 @@ func SM2_ENC_SelfTest()uint32 {
 		return uint32(tmp)
 	}
 
-	if memcmp(Cipher[:], std_Cipher[:], len(std_Message)+SM2_NUMWORD*3) != 0 {
+	if kdf.Memcmp(Cipher[:], std_Cipher[:], len(std_Message)+SM2_NUMWORD*3) != 0 {
 		return ERR_SELFTEST_ENC
 	}
 	//decrypt cipher and compare the result with the standard data
@@ -315,7 +300,7 @@ func SM2_ENC_SelfTest()uint32 {
 	if tmp != 0 {
 		return uint32(tmp)
 	}
-	if memcmp(M[:], std_Message[:], len(std_Message)) != 0 {
+	if kdf.Memcmp(M[:], std_Message[:], len(std_Message)) != 0 {
 		return ERR_SELFTEST_DEC
 	}
 	fmt.Printf("message:%x\n",M)

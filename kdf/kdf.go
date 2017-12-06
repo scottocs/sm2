@@ -49,6 +49,21 @@ func SM3_gg1(a, b, c uint32) uint32 {
 	return (a & b) | ((^a) & c)
 }
 
+func Memcmp ( buf1 []uint8, buf2 []uint8,count int) int {
+
+	if count == 0{
+		return 0
+	}
+	var i int =0
+
+	for buf1[i] == buf2[i]  {
+		if i == count-1{
+			break
+		}
+		i ++
+	}
+	return int(buf1[i] - buf2[i])
+}
 type SM3_STATE struct {
 	state  [8]uint32
 	length uint32
@@ -273,7 +288,7 @@ func SM3_KDF(Z []uint8, zlen uint32, klen uint32, K []uint8) {
 		SM3_process(&md, Z, int(zlen))
 		SM3_process(&md, ct[0:], 4)
 		SM3_done(&md, Ha[0:])
-		memcpy(K[32*(i-1):], Ha[:], 32)
+		Memcpy(K[32*(i-1):], Ha[:], 32)
 		if ct[3] == 0xff {
 			ct[3] = 0
 			if ct[2] == 0xff {
@@ -299,8 +314,8 @@ func SM3_KDF(Z []uint8, zlen uint32, klen uint32, K []uint8) {
 	if bitklen % 256!=0 {
 		i = (256 - bitklen + 256*(bitklen/256)) / 8
 		j = (bitklen - 256*(bitklen/256)) / 8
-		memcpy(K[32*(t-1):], Ha[:], int(j))
+		Memcpy(K[32*(t-1):], Ha[:], int(j))
 	} else {
-		memcpy(K[32*(t-1):], Ha[:], 32)
+		Memcpy(K[32*(t-1):], Ha[:], 32)
 	}
 }

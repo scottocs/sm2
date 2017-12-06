@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/scottocs/sm2/kdf"
+)
 
 var SM2_WORDSIZE int = 8
 var SM2_NUMBITS int = 256
@@ -30,115 +33,115 @@ var SM2_Gy=[32]uint8{0xbc,0x37,0x36,0xa2,0xf4,0xf6,0x77,0x9c,0x59,0xbd,0xce,0xe3
 0xa9,0x87,0x7c,0xc6,0x2a,0x47,0x40,0x02,0xdf,0x32,0xe5,0x21,0x39,0xf0,0xa0}
 var SM2_n=[32]uint8{0xff,0xff,0xff,0xfe,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
 0x72,0x03,0xdf,0x6b,0x21,0xc6,0x05,0x2b,0x53,0xbb,0xf4,0x09,0x39,0xd5,0x41,0x23}
-var Gx,Gy,p,a,b,n Big
-var G,nG *Epoint
-var para_p, para_a, para_b, para_n, para_Gx, para_Gy, para_h Big
+var Gx,Gy,p,a,b,n kdf.Big
+var G,nG *kdf.Epoint
+var para_p, para_a, para_b, para_n, para_Gx, para_Gy, para_h kdf.Big
 
 func SM2_Init () int {
-	Gx = Mirvar(0)
-	Gy = Mirvar(0)
-	p = Mirvar(0)
-	a = Mirvar(0)
-	b = Mirvar(0)
-	n = Mirvar(0)
-	Bytes_to_big(SM2_NUMWORD, SM2_Gx[0:], Gx)
-	Bytes_to_big(SM2_NUMWORD, SM2_Gy[0:], Gy)
-	Bytes_to_big(SM2_NUMWORD, SM2_p[0:], p)
-	Bytes_to_big(SM2_NUMWORD, SM2_a[0:], a)
-	Bytes_to_big(SM2_NUMWORD, SM2_b[0:], b)
-	Bytes_to_big(SM2_NUMWORD, SM2_n[0:], n)
-	ecurve_init(a, b, p, 0) //MR_PROJECTIVE为0？
-	G = Epoint_init()
-	nG = Epoint_init()
+	Gx = kdf.Mirvar(0)
+	Gy = kdf.Mirvar(0)
+	p = kdf.Mirvar(0)
+	a = kdf.Mirvar(0)
+	b = kdf.Mirvar(0)
+	n = kdf.Mirvar(0)
+	kdf.Bytes_to_big(SM2_NUMWORD, SM2_Gx[0:], Gx)
+	kdf.Bytes_to_big(SM2_NUMWORD, SM2_Gy[0:], Gy)
+	kdf.Bytes_to_big(SM2_NUMWORD, SM2_p[0:], p)
+	kdf.Bytes_to_big(SM2_NUMWORD, SM2_a[0:], a)
+	kdf.Bytes_to_big(SM2_NUMWORD, SM2_b[0:], b)
+	kdf.Bytes_to_big(SM2_NUMWORD, SM2_n[0:], n)
+	kdf.Ecurve_init(a, b, p, 0) //MR_PROJECTIVE为0？
+	G = kdf.Epoint_init()
+	nG = kdf.Epoint_init()
 	para_a, para_b, para_n, para_p, para_Gx, para_Gy = a, b, n, p, Gx, Gy
-	if Epoint_set(Gx, Gy, 0, G) == 0 { //initialise point G
+	if kdf.Epoint_set(Gx, Gy, 0, G) == 0 { //initialise point G
 		return int(ERR_ECURVE_INIT)
 	}
-	ecurve_mult(n, G, nG)
-	if Point_at_infinity(nG) == 0 {
+	kdf.Ecurve_mult(n, G, nG)
+	if kdf.Point_at_infinity(nG) == 0 {
 		//test if the order of the point is n
 		return int(ERR_ORDER)
 	}
 	return 0
 }
 
-//func Test_Point(point *Epoint)int {
-//	var x, y, x_3, tmp Big
-//	x = Mirvar(0)
-//	y = Mirvar(0)
-//	x_3 = Mirvar(0)
-//	tmp = Mirvar(0)
+//func Test_Point(point *kdf.Epoint)int {
+//	var x, y, x_3, tmp kdf.Big
+//	x = kdf.Mirvar(0)
+//	y = kdf.Mirvar(0)
+//	x_3 = kdf.Mirvar(0)
+//	tmp = kdf.Mirvar(0)
 //	//test if y^2=x^3+ax+b
-//	Epoint_get(point, x, y)
+//	kdf.Epoint_get(point, x, y)
 //	Power(x, 3, p, x_3) //x_3=x^3 mod p
-//	Multiply(x, a, x)   //x=a*x
-//	Divide(x, p, tmp)   //x=a*x mod p , tmp=a*x/p
-//	Add(x_3, x, x)      //x=x^3+ax
-//	Add(x, b, x)        //x=x^3+ax+b
-//	Divide(x, p, tmp)   //x=x^3+ax+b mod p
+//	kdf.Multiply(x, a, x)   //x=a*x
+//	kdf.Divide(x, p, tmp)   //x=a*x mod p , tmp=a*x/p
+//	kdf.Add(x_3, x, x)      //x=x^3+ax
+//	kdf.Add(x, b, x)        //x=x^3+ax+b
+//	kdf.Divide(x, p, tmp)   //x=x^3+ax+b mod p
 //	Power(y, 2, p, y)   //y=y^2 mod p
-//	if compare(x, y) != 0 {
+//	if kdf.Compare(x, y) != 0 {
 //		return int(ERR_NOT_VALID_POINT)
 //	} else {
 //return 0}
 //}
 
 
-//func Test_PubKey(pubKey *Epoint)int {
-//	var x, y, x_3, tmp Big
-//	var nP *Epoint
-//	x = Mirvar(0)
-//	y = Mirvar(0)
-//	x_3 = Mirvar(0)
-//	tmp = Mirvar(0)
-//	nP = Epoint_init()
+//func Test_PubKey(pubKey *kdf.Epoint)int {
+//	var x, y, x_3, tmp kdf.Big
+//	var nP *kdf.Epoint
+//	x = kdf.Mirvar(0)
+//	y = kdf.Mirvar(0)
+//	x_3 = kdf.Mirvar(0)
+//	tmp = kdf.Mirvar(0)
+//	nP = kdf.Epoint_init()
 //	//test if the pubKey is the point at infinity
 //	if Point_at_infinity(pubKey) != 0 {
 //		// if pubKey is point at infinity, return error;
 //		return int(ERR_INFINITY_POINT)
 //	}
 //	//test if x<p and y<p both hold
-//	Epoint_get(pubKey, x, y)
-//	if (compare(x, p) != -1) || (compare(y, p) != -1) {
+//	kdf.Epoint_get(pubKey, x, y)
+//	if (kdf.Compare(x, p) != -1) || (kdf.Compare(y, p) != -1) {
 //		return int(ERR_NOT_VALID_ELEMENT)
 //	}
 //	if Test_Point(pubKey) != 0 {
 //		return int(ERR_NOT_VALID_POINT)
 //	}
 //	//test if the order of pubKey is equal to n
-//	ecurve_mult(n, pubKey, nP) // nP=[n]P
+//	kdf.Ecurve_mult(n, pubKey, nP) // nP=[n]P
 //	if Point_at_infinity(nP) == 0 { // if np is point NOT at infinity, return error;
 //		return int(ERR_ORDER)
 //	}
 //	return 0
 //}
 
-func Test_Zero(x Big) int {
-	var zero Big
-	zero = Mirvar(0)
-	if compare(x, zero) == 0 {
+func Test_Zero(x kdf.Big) int {
+	var zero kdf.Big
+	zero = kdf.Mirvar(0)
+	if kdf.Compare(x, zero) == 0 {
 		return 1
 	} else {
 		return 0
 	}
 }
 
-func Test_n(x Big)int {
-	// Bytes_to_big(32,SM2_n,n);
-	if compare(x, n) == 0 {
+func Test_n(x kdf.Big)int {
+	// kdf.Bytes_to_big(32,SM2_n,n);
+	if kdf.Compare(x, n) == 0 {
 		return 1
 	} else {
 		return 0
 	}
 }
 
-func Test_Range(x Big)int {
-	var one, decr_n Big
-	one = Mirvar(0)
-	decr_n = Mirvar(0)
-	convert(1, one)
-	decr(n, 1, decr_n)
-	if (compare(x, one) < 0) || (compare(x, decr_n) > 0) { //这里原本是(compare(x, one) < 0) | (compare(x, decr_n) > 0)
+func Test_Range(x kdf.Big)int {
+	var one, decr_n kdf.Big
+	one = kdf.Mirvar(0)
+	decr_n = kdf.Mirvar(0)
+	kdf.convert(1, one)
+	kdf.decr(n, 1, decr_n)
+	if (kdf.Compare(x, one) < 0) || (kdf.Compare(x, decr_n) > 0) { //这里原本是(kdf.Compare(x, one) < 0) | (kdf.Compare(x, decr_n) > 0)
 		return 1
 	}
 	return 0
@@ -146,19 +149,19 @@ func Test_Range(x Big)int {
 
 func SM2_KeyGeneration(PriKey[]uint8,Px[]uint8,Py[]uint8)int {
 	var i int = 0
-	var d, PAx, PAy Big
-	var PA *Epoint
+	var d, PAx, PAy kdf.Big
+	var PA *kdf.Epoint
 	SM2_Init()
-	PA = Epoint_init()
-	d = Mirvar(0)
-	PAx = Mirvar(0)
-	PAy = Mirvar(0)
-	Bytes_to_big(SM2_NUMWORD, PriKey, d)
-	ecurve_mult(d, G, PA)
-	Epoint_get(PA, PAx, PAy)
-	Big_to_bytes(SM2_NUMWORD, PAx, Px, true)
-	Big_to_bytes(SM2_NUMWORD, PAy, Py, true)
-	i = int(Test_PubKey(PA))
+	PA = kdf.Epoint_init()
+	d = kdf.Mirvar(0)
+	PAx = kdf.Mirvar(0)
+	PAy = kdf.Mirvar(0)
+	kdf.Bytes_to_big(SM2_NUMWORD, PriKey, d)
+	kdf.Ecurve_mult(d, G, PA)
+	kdf.Epoint_get(PA, PAx, PAy)
+	kdf.Big_to_bytes(SM2_NUMWORD, PAx, Px, true)
+	kdf.Big_to_bytes(SM2_NUMWORD, PAy, Py, true)
+	i = int(kdf.Test_PubKey(PA))
 	if i != 0 {
 		return i
 	} else {
@@ -168,99 +171,99 @@ func SM2_KeyGeneration(PriKey[]uint8,Px[]uint8,Py[]uint8)int {
 
 func SM2_Sign(message []uint8,len int,ZA[]uint8,rand[]uint8,d[]uint8,R[]uint8,S[]uint8)int {
 	var hash [32]uint8
-	var M_len int = len + int(SM3_len)/8
+	var M_len int = len + int(kdf.SM3_len)/8
 	var M []uint8 = nil
 	var i int
-	var dA, r, s, e, k, KGx, KGy Big
-	var rem, rk, z1, z2 Big
-	var KG *Epoint
+	var dA, r, s, e, k, KGx, KGy kdf.Big
+	var rem, rk, z1, z2 kdf.Big
+	var KG *kdf.Epoint
 	i = SM2_Init()
 	if i != 0 {
 		return i
 	}
 	//initiate
-	dA = Mirvar(0)
-	e = Mirvar(0)
-	k = Mirvar(0)
-	KGx = Mirvar(0)
-	KGy = Mirvar(0)
-	r = Mirvar(0)
-	s = Mirvar(0)
-	rem = Mirvar(0)
-	rk = Mirvar(0)
-	z1 = Mirvar(0)
-	z2 = Mirvar(0)
-	Bytes_to_big(SM2_NUMWORD, d, dA) //cinstr(dA,d);
-	KG = Epoint_init()
+	dA = kdf.Mirvar(0)
+	e = kdf.Mirvar(0)
+	k = kdf.Mirvar(0)
+	KGx = kdf.Mirvar(0)
+	KGy = kdf.Mirvar(0)
+	r = kdf.Mirvar(0)
+	s = kdf.Mirvar(0)
+	rem = kdf.Mirvar(0)
+	rk = kdf.Mirvar(0)
+	z1 = kdf.Mirvar(0)
+	z2 = kdf.Mirvar(0)
+	kdf.Bytes_to_big(SM2_NUMWORD, d, dA) //cinstr(dA,d);
+	KG = kdf.Epoint_init()
 	//step1,set M=ZA||M
 	//M = (char *)malloc(sizeof(char) * (M_len + 1)) 记号
 	M = make([]uint8,M_len+1)
-	memcpy(M, ZA, int(SM3_len)/8)
-	memcpy(M[SM3_len/8:], message, len)
+	kdf.Memcpy(M, ZA, int(kdf.SM3_len)/8)
+	kdf.Memcpy(M[kdf.SM3_len/8:], message, len)
 	//step2,generate e=H(M)
-	SM3_256(M, M_len, hash[:])
-	Bytes_to_big(int(SM3_len)/8, hash[:], e)
+	kdf.SM3_256(M, M_len, hash[:])
+	kdf.Bytes_to_big(int(kdf.SM3_len)/8, hash[:], e)
 	//step3:generate k
-	Bytes_to_big(int(SM3_len)/8, rand, k)
+	kdf.Bytes_to_big(int(kdf.SM3_len)/8, rand, k)
 	//step4:calculate kG
-	ecurve_mult(k, G, KG)
+	kdf.Ecurve_mult(k, G, KG)
 	//step5:calculate r
-	Epoint_get(KG, KGx, KGy)
-	Add(e, KGx, r)
-	Divide(r, n, rem)
+	kdf.Epoint_get(KG, KGx, KGy)
+	kdf.Add(e, KGx, r)
+	kdf.Divide(r, n, rem)
 	//judge r=0 or n+k=n?
-	Add(r, k, rk)
+	kdf.Add(r, k, rk)
 	if Test_Zero(r)!=0 || Test_n(rk)!=0 {
 		return int(ERR_GENERATE_R)
 	}
 	//step6:generate s
-	incr(dA, 1, z1)
-	xgcd(z1, n, z1, z1, z1)
-	Multiply(r, dA, z2)
-	Divide(z2, n, rem)
-	subtract(k, z2, z2)
-	Add(z2, n, z2)
-	Multiply(z1, z2, s)
-	Divide(s, n, rem)
+	kdf.Incr(dA, 1, z1)
+	kdf.Xgcd(z1, n, z1, z1, z1)
+	kdf.Multiply(r, dA, z2)
+	kdf.Divide(z2, n, rem)
+	kdf.Subtract(k, z2, z2)
+	kdf.Add(z2, n, z2)
+	kdf.Multiply(z1, z2, s)
+	kdf.Divide(s, n, rem)
 	//judge s=0?
 	if Test_Zero(s)!=0 {
 		return int(ERR_GENERATE_S)
 	}
-	Big_to_bytes(SM2_NUMWORD, r, R, true)
-	Big_to_bytes(SM2_NUMWORD, s, S, true)
+	kdf.Big_to_bytes(SM2_NUMWORD, r, R, true)
+	kdf.Big_to_bytes(SM2_NUMWORD, s, S, true)
 	//free(M);
 	return 0
 }
 
 func SM2_Verify(message []uint8,len int,ZA[]uint8,Px[]uint8,Py[]uint8,R[]uint8,S[]uint8)int {
 	var hash [32]uint8
-	var M_len int = len + int(SM3_len)/8
+	var M_len int = len + int(kdf.SM3_len)/8
 	var M []uint8 = nil
 	var i int
-	var PAx, PAy, r, s, e, t, rem, x1, y1, RR Big
-	var PA, sG, tPA *Epoint
+	var PAx, PAy, r, s, e, t, rem, x1, y1, RR kdf.Big
+	var PA, sG, tPA *kdf.Epoint
 	i = SM2_Init()
 	if i != 0 {
 		return i
 	}
-	PAx = Mirvar(0)
-	PAy = Mirvar(0)
-	r = Mirvar(0)
-	s = Mirvar(0)
-	e = Mirvar(0)
-	t = Mirvar(0)
-	x1 = Mirvar(0)
-	y1 = Mirvar(0)
-	rem = Mirvar(0)
-	RR = Mirvar(0)
-	PA = Epoint_init()
-	sG = Epoint_init()
-	tPA = Epoint_init()
-	Bytes_to_big(SM2_NUMWORD, Px, PAx)
-	Bytes_to_big(SM2_NUMWORD, Py, PAy)
-	Bytes_to_big(SM2_NUMWORD, R, r)
-	Bytes_to_big(SM2_NUMWORD, S, s)
-	if Epoint_set(PAx, PAy, 0, PA) == 0 { //initialise public key
+	PAx = kdf.Mirvar(0)
+	PAy = kdf.Mirvar(0)
+	r = kdf.Mirvar(0)
+	s = kdf.Mirvar(0)
+	e = kdf.Mirvar(0)
+	t = kdf.Mirvar(0)
+	x1 = kdf.Mirvar(0)
+	y1 = kdf.Mirvar(0)
+	rem = kdf.Mirvar(0)
+	RR = kdf.Mirvar(0)
+	PA = kdf.Epoint_init()
+	sG = kdf.Epoint_init()
+	tPA = kdf.Epoint_init()
+	kdf.Bytes_to_big(SM2_NUMWORD, Px, PAx)
+	kdf.Bytes_to_big(SM2_NUMWORD, Py, PAy)
+	kdf.Bytes_to_big(SM2_NUMWORD, R, r)
+	kdf.Bytes_to_big(SM2_NUMWORD, S, s)
+	if kdf.Epoint_set(PAx, PAy, 0, PA) == 0 { //initialise public key
 		return int(ERR_PUBKEY_INIT)
 	}
 	//step1: test if r belong to [1,n-1]
@@ -273,27 +276,27 @@ func SM2_Verify(message []uint8,len int,ZA[]uint8,Px[]uint8,Py[]uint8,R[]uint8,S
 	}
 	//step3,generate M
 	M = make([]uint8,M_len+1)
-	memcpy(M, ZA, 32)
-	memcpy(M[32:], message, len)
+	kdf.Memcpy(M, ZA, 32)
+	kdf.Memcpy(M[32:], message, len)
 	//step4,generate e=H(M)
-	SM3_256(M, M_len, hash[:])
-	Bytes_to_big(int(SM3_len)/8, hash[:], e)
+	kdf.SM3_256(M, M_len, hash[:])
+	kdf.Bytes_to_big(int(kdf.SM3_len)/8, hash[:], e)
 	//step5:generate t
-	Add(r, s, t)
-	Divide(t, n, rem)
+	kdf.Add(r, s, t)
+	kdf.Divide(t, n, rem)
 	if Test_Zero(t)!=0 {
 		return int(ERR_GENERATE_T)
 	}
 	//step 6: generate(x1,y1)
-	ecurve_mult(s, G, sG)
-	ecurve_mult(t, PA, tPA)
-	ecurve_add(sG, tPA)
-	Epoint_get(tPA, x1, y1)
+	kdf.Ecurve_mult(s, G, sG)
+	kdf.Ecurve_mult(t, PA, tPA)
+	kdf.Ecurve_add(sG, tPA)
+	kdf.Epoint_get(tPA, x1, y1)
 	//step7:generate RR
-	Add(e, x1, RR)
-	Divide(RR, n, rem)
+	kdf.Add(e, x1, RR)
+	kdf.Divide(RR, n, rem)
 	//free(M);
-	if compare(RR, r) == 0 {
+	if kdf.Compare(RR, r) == 0 {
 		return 0
 	} else {
 		return int(ERR_DATA_MEMCMP)
@@ -329,22 +332,22 @@ var yA=[32]uint8{0xcc,0xea,0x49,0x0c,0xe2,0x67,0x75,0xa5,0x2d,0xc6,0xea,0x71,0x8
 	N := IDA_len+2+SM2_NUMWORD*6
 	var Msg = make([]uint8,N,N)                         //210=IDA_len+2+SM2_NUMWORD*6
 	var temp int
-	var mip *Miracl = Mirsys(10000, 16)
+	var mip *kdf.Miracl = kdf.Mirsys(10000, 16)
 	mip.IOBASE = 16
 	temp = SM2_KeyGeneration(dA[:], xA[:], yA[:])
 	if temp != 0 {
 		return temp
 	}
 	// ENTLA|| IDA|| a|| b|| Gx || Gy || xA|| yA
-	memcpy(Msg[:], ENTLA[:], 2)
-	memcpy(Msg[2:N], IDA[:], IDA_len)
-	memcpy(Msg[2+IDA_len:N], SM2_a[:], SM2_NUMWORD)
-	memcpy(Msg[2+IDA_len+SM2_NUMWORD:N], SM2_b[:], SM2_NUMWORD)
-	memcpy(Msg[2+IDA_len+SM2_NUMWORD*2:N], SM2_Gx[:], SM2_NUMWORD)
-	memcpy(Msg[2+IDA_len+SM2_NUMWORD*3:N], SM2_Gy[:], SM2_NUMWORD)
-	memcpy(Msg[2+IDA_len+SM2_NUMWORD*4:N], xA[:], SM2_NUMWORD)
-	memcpy(Msg[2+IDA_len+SM2_NUMWORD*5:N], yA[:], SM2_NUMWORD)
-	SM3_256(Msg[:], N, ZA[:])
+	kdf.Memcpy(Msg[:], ENTLA[:], 2)
+	kdf.Memcpy(Msg[2:N], IDA[:], IDA_len)
+	kdf.Memcpy(Msg[2+IDA_len:N], SM2_a[:], SM2_NUMWORD)
+	kdf.Memcpy(Msg[2+IDA_len+SM2_NUMWORD:N], SM2_b[:], SM2_NUMWORD)
+	kdf.Memcpy(Msg[2+IDA_len+SM2_NUMWORD*2:N], SM2_Gx[:], SM2_NUMWORD)
+	kdf.Memcpy(Msg[2+IDA_len+SM2_NUMWORD*3:N], SM2_Gy[:], SM2_NUMWORD)
+	kdf.Memcpy(Msg[2+IDA_len+SM2_NUMWORD*4:N], xA[:], SM2_NUMWORD)
+	kdf.Memcpy(Msg[2+IDA_len+SM2_NUMWORD*5:N], yA[:], SM2_NUMWORD)
+	kdf.SM3_256(Msg[:], N, ZA[:])
 	temp = SM2_Sign(message, len, ZA[:], rand[:], dA[:], r[:], s[:])
 	if temp != 0 {
 		fmt.Print("s")

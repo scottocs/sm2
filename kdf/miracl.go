@@ -127,7 +127,7 @@ type Miracl struct {
 }
 var Mr_mip *Miracl = &Miracl{}
 
-func memcpy ( buf1 []uint8, buf2 []uint8,count int) {
+func Memcpy ( buf1 []uint8, buf2 []uint8,count int) {
 
 	if count == 0{
 		return
@@ -139,7 +139,7 @@ func memcpy ( buf1 []uint8, buf2 []uint8,count int) {
 	}
 }
 
-func compare(x, y Big) int {
+func Compare(x, y Big) int {
 	var m, n, sig int
 	var sx, sy uint32
 	if x == y {
@@ -270,7 +270,7 @@ func Ecurve_init(a Big, b Big, p Big, type1 int) { /* Initialize the active ecur
 		if Mr_mip.Asize >= 0 { /* big positive number - check it isn't minus something small */
 			copy(a, Mr_mip.w1)
 			Divide(Mr_mip.w1, p, p)
-			subtract(p, Mr_mip.w1, Mr_mip.w1)
+			Subtract(p, Mr_mip.w1, Mr_mip.w1)
 			as = size(Mr_mip.w1)
 			if as < 1<<30 {
 				Mr_mip.Asize = -as
@@ -283,7 +283,7 @@ func Ecurve_init(a Big, b Big, p Big, type1 int) { /* Initialize the active ecur
 		if Mr_mip.Bsize >= 0 { /* big positive number - check it isn't minus something small */
 			copy(b, Mr_mip.w1)
 			Divide(Mr_mip.w1, p, p)
-			subtract(p, Mr_mip.w1, Mr_mip.w1)
+			Subtract(p, Mr_mip.w1, Mr_mip.w1)
 			as = size(Mr_mip.w1)
 			if as < 1<<30 {
 				Mr_mip.Bsize = -as
@@ -351,13 +351,13 @@ func Ecurve_mult(e Big, pa *Epoint, pt *Epoint) int { /* pt=e*pa; */
 
 		for i = 1; i < 7; i++ { /* precomputation */
 			epoint_copy(table[i-1], table[i])
-			ecurve_add(table[7], table[i])
+			Ecurve_add(table[7], table[i])
 		}
-		ecurve_add(table[6], table[7])
+		Ecurve_add(table[6], table[7])
 
 		epoint_multi_norm(8, work[0:], table[0:])
 
-		nb = logb2(Mr_mip.w10)
+		nb = Logb2(Mr_mip.w10)
 		nadds = 0
 		Epoint_set(nil, nil, 0, pt)
 		for i = nb - 1; i >= 1; { /* add/subtract */
@@ -369,7 +369,7 @@ func Ecurve_mult(e Big, pa *Epoint, pt *Epoint) int { /* pt=e*pa; */
 				ecurve_double(pt)
 			}
 			if n > 0 {
-				ecurve_add(table[n/2], pt)
+				Ecurve_add(table[n/2], pt)
 				nadds++
 			}
 			if n < 0 {
@@ -396,7 +396,7 @@ func Ecurve_mult(e Big, pa *Epoint, pt *Epoint) int { /* pt=e*pa; */
 		epoint_copy(pt, p)
 
 		nadds = 0
-		expb2(logb2(Mr_mip.w10)-1, Mr_mip.w11)
+		Expb2(Logb2(Mr_mip.w10)-1, Mr_mip.w11)
 		mr_psub(Mr_mip.w10, Mr_mip.w11, Mr_mip.w10)
 		subdiv(Mr_mip.w11, 2, Mr_mip.w11)
 		for size(Mr_mip.w11) > 1 { /* add/subtract method */
@@ -409,7 +409,7 @@ func Ecurve_mult(e Big, pa *Epoint, pt *Epoint) int { /* pt=e*pa; */
 			ch = mr_compare(Mr_mip.w10, Mr_mip.w11) /* h(i)=1? */
 			if ch >= 0 {                            /* h(i)=1 */
 				if ce < 0 {
-					ecurve_add(p, pt)
+					Ecurve_add(p, pt)
 					nadds++
 				}
 				mr_psub(Mr_mip.w10, Mr_mip.w11, Mr_mip.w10)
@@ -445,7 +445,7 @@ func Test_Point(point *Epoint) uint32 {
 	Add(x, Para_b, x)        //x=x^3+ax+b
 	Divide(x, Para_p, tmp)   //x=x^3+ax+b mod p
 	Power(y, 2, Para_p, y)   //y=y^2 mod p
-	if compare(x, y) != 0 {
+	if Compare(x, y) != 0 {
 		return ERR_NOT_VALID_POINT
 	} else {
 		return 0
@@ -466,7 +466,7 @@ func Test_PubKey(pubKey *Epoint) uint32 {
 	}
 	//test if x<p and y<p both hold
 	Epoint_get(pubKey, x, y)
-	if (compare(x, Para_p) != -1) || (compare(y, Para_p) != -1) {
+	if (Compare(x, Para_p) != -1) || (Compare(y, Para_p) != -1) {
 		return ERR_NOT_VALID_ELEMENT
 	}
 	if Test_Point(pubKey) != 0 {
@@ -741,7 +741,7 @@ func Bytes_to_big(len int, ptr []uint8, x Big) { /* convert len bytes into a big
 
 			ch = uint16(ptr[i])
 			dig = uint32(ch)
-			incr(x, int(dig), x)
+			Incr(x, int(dig), x)
 		}
 	}
 	Mr_mip.depth--
@@ -2002,7 +2002,7 @@ func qdiv(u, v uint64) uint32 { /* fast division - small quotient expected.  */
 	return uint32(lq)
 }
 
-func subtract(x, y, z Big) { /* subtract two big signed numbers z=x-y */
+func Subtract(x, y, z Big) { /* subtract two big signed numbers z=x-y */
 	if Mr_mip.ERNUM != 0 {
 		return
 	}
@@ -2056,7 +2056,7 @@ func (p *doubleword) setDFromH() {
 	p.d = uint64(p.h[1])<<32 + uint64(p.h[0])
 }
 
-func xgcd(x, y, xd, yd, z Big) int {
+func Xgcd(x, y, xd, yd, z Big) int {
 	/* greatest common divisor by Euclids method  *
 	 * extended to also calculate xd and yd where *
 	 *      z = x.xd + y.yd = gcd(x,y)            *
@@ -2269,7 +2269,7 @@ func xgcd(x, y, xd, yd, z Big) int {
 		iter++
 	}
 	if iter%2 == 1 {
-		subtract(y, Mr_mip.w3, Mr_mip.w3)
+		Subtract(y, Mr_mip.w3, Mr_mip.w3)
 	}
 
 	if xd != yd {
@@ -2290,7 +2290,7 @@ func invmodp(x, y, z Big) int {
 	var gcd int
 
 	MR_IN(213)
-	gcd = xgcd(x, y, z, z, z)
+	gcd = Xgcd(x, y, z, z, z)
 	Mr_mip.depth--
 	return gcd
 }
@@ -2672,7 +2672,7 @@ func jack(a, n Big) int { /* find jacobi symbol (a/n), for positive odd n */
 	return 0
 }
 
-func incr(x Big, n int, z Big) { /* add int to big number: z=x+n */
+func Incr(x Big, n int, z Big) { /* add int to big number: z=x+n */
 
 	if Mr_mip.ERNUM != 0 {
 		return
@@ -2770,7 +2770,7 @@ func nres_sqroot(x, w Big) int { /* w=sqrt(x) mod p. This depends on p being pri
 
 	js = Mr_mip.pmod8%4 - 2 /* 1 mod 4 or 3 mod 4 prime? */
 
-	incr(Mr_mip.modulus, js, Mr_mip.w10)
+	Incr(Mr_mip.modulus, js, Mr_mip.w10)
 	subdiv(Mr_mip.w10, 4, Mr_mip.w10) /* (p+/-1)/4 */
 
 	if js == 1 { /* 3 mod 4 primes - do a quick and dirty sqrt(x)=x^(p+1)/4 mod p */
@@ -2822,7 +2822,7 @@ func nres_sqroot(x, w Big) int { /* w=sqrt(x) mod p. This depends on p being pri
 	return 1
 }
 
-func logb2(x Big) int { /* returns number of bits in x */
+func Logb2(x Big) int { /* returns number of bits in x */
 	var xl, lg2 int
 	var top uint32
 
@@ -2897,7 +2897,7 @@ func mr_shiftbits(x uint32, n int) uint32 {
 	return x
 }
 
-func expb2(n int, x Big) { /* sets x=2^n */
+func Expb2(n int, x Big) { /* sets x=2^n */
 	var r, p, i int
 
 	if Mr_mip.ERNUM != 0 {
@@ -2970,7 +2970,7 @@ func nres_lucas(p, r, vp, v Big) {
 
 	if Mr_mip.base == Mr_mip.base2 {
 
-		nb = logb2(Mr_mip.w1)
+		nb = Logb2(Mr_mip.w1)
 		for i = nb - 1; i >= 0; i-- {
 			//if Mr_mip.user != nil {
 			//	*Mr_mip.user()
@@ -2990,7 +2990,7 @@ func nres_lucas(p, r, vp, v Big) {
 			}
 		}
 	} else {
-		expb2(logb2(Mr_mip.w1)-1, Mr_mip.w2)
+		Expb2(Logb2(Mr_mip.w1)-1, Mr_mip.w2)
 
 		for (Mr_mip.ERNUM == 0) && size(Mr_mip.w2) != 0 { /* use binary method */
 			if mr_compare(Mr_mip.w1, Mr_mip.w2) >= 0 { /* vp=v*vp-p, v=v*v-2 */
@@ -2998,7 +2998,7 @@ func nres_lucas(p, r, vp, v Big) {
 				nres_modsub(Mr_mip.w8, Mr_mip.w3, Mr_mip.w8)
 				nres_modmult(Mr_mip.w9, Mr_mip.w9, Mr_mip.w9)
 				nres_modsub(Mr_mip.w9, Mr_mip.w4, Mr_mip.w9)
-				subtract(Mr_mip.w1, Mr_mip.w2, Mr_mip.w1)
+				Subtract(Mr_mip.w1, Mr_mip.w2, Mr_mip.w1)
 			} else { /* v=v*vp-p, vp=vp*vp-2 */
 				nres_modmult(Mr_mip.w9, Mr_mip.w8, Mr_mip.w9)
 				nres_modsub(Mr_mip.w9, Mr_mip.w3, Mr_mip.w9)
@@ -3651,7 +3651,7 @@ func nres_div2(x, w Big) {
 	Mr_mip.depth--
 }
 
-func ecurve_add(p, pa *Epoint) int { /* pa=pa+p; */
+func Ecurve_add(p, pa *Epoint) int { /* pa=pa+p; */
 
 	if Mr_mip.ERNUM != 0 {
 		return 0
@@ -3824,7 +3824,7 @@ func ecurve_sub(p, pa *Epoint) int {
 	}
 
 	epoint_negate(p)
-	r = ecurve_add(p, pa)
+	r = Ecurve_add(p, pa)
 	epoint_negate(p)
 
 	Mr_mip.depth--
@@ -3961,13 +3961,13 @@ func ecurve_mult(e Big, pa *Epoint, pt *Epoint) int { /* pt=e*pa; */
 
 		for i = 1; i < 7; i++ { /* precomputation */
 			epoint_copy(table[i-1], table[i])
-			ecurve_add(table[7], table[i])
+			Ecurve_add(table[7], table[i])
 		}
-		ecurve_add(table[6], table[7])
+		Ecurve_add(table[6], table[7])
 
 		epoint_multi_norm(8, work[0:], table[0:])
 
-		nb = logb2(Mr_mip.w10)
+		nb = Logb2(Mr_mip.w10)
 		nadds = 0
 		Epoint_set(nil, nil, 0, pt)
 		for i = nb - 1; i >= 1; { /* add/subtract */
@@ -3979,7 +3979,7 @@ func ecurve_mult(e Big, pa *Epoint, pt *Epoint) int { /* pt=e*pa; */
 				ecurve_double(pt)
 			}
 			if n > 0 {
-				ecurve_add(table[n/2], pt)
+				Ecurve_add(table[n/2], pt)
 				nadds++
 			}
 			if n < 0 {
@@ -4006,7 +4006,7 @@ func ecurve_mult(e Big, pa *Epoint, pt *Epoint) int { /* pt=e*pa; */
 		epoint_copy(pt, p)
 
 		nadds = 0
-		expb2(logb2(Mr_mip.w10)-1, Mr_mip.w11)
+		Expb2(Logb2(Mr_mip.w10)-1, Mr_mip.w11)
 		mr_psub(Mr_mip.w10, Mr_mip.w11, Mr_mip.w10)
 		subdiv(Mr_mip.w11, 2, Mr_mip.w11)
 		for size(Mr_mip.w11) > 1 { /* add/subtract method */
@@ -4019,7 +4019,7 @@ func ecurve_mult(e Big, pa *Epoint, pt *Epoint) int { /* pt=e*pa; */
 			ch = mr_compare(Mr_mip.w10, Mr_mip.w11) /* h(i)=1? */
 			if ch >= 0 {                            /* h(i)=1 */
 				if ce < 0 {
-					ecurve_add(p, pt)
+					Ecurve_add(p, pt)
 					nadds++
 				}
 				mr_psub(Mr_mip.w10, Mr_mip.w11, Mr_mip.w10)
