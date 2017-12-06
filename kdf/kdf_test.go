@@ -1,7 +1,10 @@
 package kdf
 
-import "testing"
+import (
+	"testing"
+	"fmt"
+)
 
 func TestReverse(t *testing.T) {
-
+	fmt.Println("hello")
 }
