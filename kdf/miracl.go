@@ -226,7 +226,7 @@ func prepare_monty(n Big) uint32 { /* prepare Montgomery modulus */
 		Mr_mip.NO_CARRY = 1
 	}
 	Mr_mip.MONTY = 1
-	convert(1, Mr_mip.one)
+	Convert(1, Mr_mip.one)
 	if Mr_mip.MONTY == 0 { /* Montgomery arithmetic is turned off */
 		copy(n, Mr_mip.modulus)
 		Mr_mip.ndash = 0
@@ -558,7 +558,7 @@ func Point_at_infinity(p *Epoint) int {
 	return 0
 }
 
-func Big_to_bytes(max int, x Big, ptr []uint8, justify bool) int { /* convert positive big into octet string */
+func Big_to_bytes(max int, x Big, ptr []uint8, justify bool) int { /* Convert positive big into octet string */
 	var i, j, r, m, n, len, start int
 	var dig, wrd uint32
 	var ch uint16
@@ -670,7 +670,7 @@ func Big_to_bytes(max int, x Big, ptr []uint8, justify bool) int { /* convert po
 	}
 }
 
-func Bytes_to_big(len int, ptr []uint8, x Big) { /* convert len bytes into a big           *
+func Bytes_to_big(len int, ptr []uint8, x Big) { /* Convert len bytes into a big           *
 	* The first byte is the Most significant */
 	var cur int
 	var i, j, m, n, r int
@@ -755,7 +755,7 @@ func Power(x Big, n uint32, z Big, w Big) { /* raise big number to int power  w=
 	if (Mr_mip.ERNUM != 0) || size(Mr_mip.w5) == 0 {
 		return
 	}
-	convert(1, w)
+	Convert(1, w)
 	if n == 0 {
 		return
 	}
@@ -871,7 +871,7 @@ func Mirvar(iv int) Big { //未实现
 
 	x.w=(var uint32 *)(ptr+sizeof(var uint32 *)+sizeof(var uint32)-align)
 
-	if (iv!=0) convert(iv,x)
+	if (iv!=0) Convert(iv,x)
 	MR_OUT*/
 	x = &Bigtype{0, nil} // has type *Vertex
 	return x
@@ -1444,7 +1444,7 @@ func mr_shift(x Big, n int, w Big) { /* set w=x.(mr_base^n) by shifting */
 }
 
 func redc(x, y Big) { /* Montgomery's REDC function p. 520 */
-	/* also used to convert n-residues back to normal form */
+	/* also used to Convert n-residues back to normal form */
 	var carry, delay_carry uint32
 	//var w0g,mg []uint32
 	var ndash ,m uint32
@@ -1575,7 +1575,7 @@ func copy(x, y Big) { /* copy x to y: y=x  */
 		y.w[i] = x.w[i]
 	}
 }
-func uconvert(n uint32, x Big) { /*  convert unsigned integer n to big number format  */
+func uconvert(n uint32, x Big) { /*  Convert unsigned integer n to big number format  */
 	var m int
 
 	zero(x)
@@ -1601,7 +1601,7 @@ func uconvert(n uint32, x Big) { /*  convert unsigned integer n to big number fo
 	x.len = uint32(m)
 }
 
-func convert(n int, x Big) { /*  convert signed integer n to big number format  */
+func Convert(n int, x Big) { /*  Convert signed integer n to big number format  */
 	var s uint32
 	if n == 0 {
 		zero(x)
@@ -2085,7 +2085,7 @@ func Xgcd(x, y, xd, yd, z Big) int {
 	s = exsign(Mr_mip.w1)
 	insign(1, Mr_mip.w1)
 	insign(1, Mr_mip.w2)
-	convert(1, Mr_mip.w3)
+	Convert(1, Mr_mip.w3)
 	zero(Mr_mip.w4)
 	last = 0
 	a, b, c, d = 0, 0, 0, 0
@@ -2295,7 +2295,7 @@ func invmodp(x, y, z Big) int {
 	return gcd
 }
 
-func nres(x, y Big) { /* convert x to n-residue format */
+func nres(x, y Big) { /* Convert x to n-residue format */
 
 	if Mr_mip.ERNUM != 0 {
 		return
@@ -2488,7 +2488,7 @@ func epoint_getrhs(x, y Big) { /* x and y must be different */
 	if mr_abs(Mr_mip.Bsize) == (1 << 30) {
 		nres_modadd(y, Mr_mip.B, y)
 	} else {
-		convert(Mr_mip.Bsize, Mr_mip.w1)
+		Convert(Mr_mip.Bsize, Mr_mip.w1)
 		nres(Mr_mip.w1, Mr_mip.w1)
 		nres_modadd(y, Mr_mip.w1, y)
 	}
@@ -2680,7 +2680,7 @@ func Incr(x Big, n int, z Big) { /* add int to big number: z=x+n */
 
 	MR_IN(7)
 
-	convert(n, Mr_mip.w0)
+	Convert(n, Mr_mip.w0)
 	mr_select(x, 1, Mr_mip.w0, z)
 
 	Mr_mip.depth--
@@ -2720,7 +2720,7 @@ func premult(x Big, n int, z Big) { /* premultiply a big number by an int z=x.n 
 	Mr_mip.depth--
 }
 
-func decr(x Big, n int, z Big) { /* subtract int from big number: z=x-n */
+func Decr(x Big, n int, z Big) { /* subtract int from big number: z=x-n */
 
 	if Mr_mip.ERNUM != 0 {
 		return
@@ -2728,7 +2728,7 @@ func decr(x Big, n int, z Big) { /* subtract int from big number: z=x-n */
 
 	MR_IN(8)
 
-	convert(n, Mr_mip.w0)
+	Convert(n, Mr_mip.w0)
 	mr_select(x, -1, Mr_mip.w0, z)
 
 	Mr_mip.depth--
@@ -2756,7 +2756,7 @@ func nres_sqroot(x, w Big) int { /* w=sqrt(x) mod p. This depends on p being pri
 	}
 
 	if size(w) == 4 /* square root of 4 is 2 */ {
-		convert(2, w)
+		Convert(2, w)
 		nres(w, w)
 		Mr_mip.depth--
 		return 1
@@ -2800,7 +2800,7 @@ func nres_sqroot(x, w Big) int { /* w=sqrt(x) mod p. This depends on p being pri
 				Divide(Mr_mip.w4, Mr_mip.modulus, Mr_mip.modulus)
 			}
 
-			decr(Mr_mip.w4, 4, Mr_mip.w1)
+			Decr(Mr_mip.w4, 4, Mr_mip.w1)
 			if jack(Mr_mip.w1, Mr_mip.modulus) == js {
 				break
 			}
@@ -2809,11 +2809,11 @@ func nres_sqroot(x, w Big) int { /* w=sqrt(x) mod p. This depends on p being pri
 			}
 		}
 
-		decr(Mr_mip.w4, 2, Mr_mip.w3)
+		Decr(Mr_mip.w4, 2, Mr_mip.w3)
 		nres(Mr_mip.w3, Mr_mip.w3)
 		nres_lucas(Mr_mip.w3, Mr_mip.w10, w, w) /* heavy lifting done here */
 		if t != 1 {
-			convert(t, Mr_mip.w11)
+			Convert(t, Mr_mip.w11)
 			nres(Mr_mip.w11, Mr_mip.w11)
 			nres_moddiv(w, Mr_mip.w11, w)
 		}
@@ -2903,7 +2903,7 @@ func Expb2(n int, x Big) { /* sets x=2^n */
 	if Mr_mip.ERNUM != 0 {
 		return
 	}
-	convert(1, x)
+	Convert(1, x)
 	if n == 0 {
 		return
 	}
@@ -2943,13 +2943,13 @@ func nres_lucas(p, r, vp, v Big) {
 
 	if size(r) == 0 {
 		zero(vp)
-		convert(2, v)
+		Convert(2, v)
 		nres(v, v)
 		Mr_mip.depth--
 		return
 	}
 	if size(r) == 1 || size(r) == (-1) { /* note - sign of r doesn't matter */
-		convert(2, vp)
+		Convert(2, vp)
 		nres(vp, vp)
 		copy(p, v)
 		Mr_mip.depth--
@@ -2958,7 +2958,7 @@ func nres_lucas(p, r, vp, v Big) {
 
 	copy(p, Mr_mip.w3)
 
-	convert(2, Mr_mip.w4)
+	Convert(2, Mr_mip.w4)
 	nres(Mr_mip.w4, Mr_mip.w4) /* w4=2 */
 
 	copy(Mr_mip.w4, Mr_mip.w8)
@@ -2966,7 +2966,7 @@ func nres_lucas(p, r, vp, v Big) {
 
 	copy(r, Mr_mip.w1)
 	insign(1, Mr_mip.w1)
-	decr(Mr_mip.w1, 1, Mr_mip.w1)
+	Decr(Mr_mip.w1, 1, Mr_mip.w1)
 
 	if Mr_mip.base == Mr_mip.base2 {
 
@@ -3433,7 +3433,7 @@ func ecurve_double(p *Epoint) { /* double epoint on active ecurve */
 		if mr_abs(Mr_mip.Asize) == 1<<30 {
 			nres_modadd(Mr_mip.w8, Mr_mip.A, Mr_mip.w8)
 		} else {
-			convert(Mr_mip.Asize, Mr_mip.w2)
+			Convert(Mr_mip.Asize, Mr_mip.w2)
 			nres(Mr_mip.w2, Mr_mip.w2)
 			nres_modadd(Mr_mip.w8, Mr_mip.w2, Mr_mip.w8)
 		} /* w8=3*x^2+A */
@@ -3460,7 +3460,7 @@ func ecurve_double(p *Epoint) { /* double epoint on active ecurve */
 		return
 	}
 
-	convert(1, Mr_mip.w1)
+	Convert(1, Mr_mip.w1)
 	if mr_abs(Mr_mip.Asize) < 1<<30 {
 		if Mr_mip.Asize != 0 {
 			if p.marker == 1 {
@@ -3713,7 +3713,7 @@ func nres_multi_inverse(m int, x []Big, w []Big) int { /* find w[i]=1/x[i] mod n
 		return 1
 	}
 
-	convert(1, w[0])
+	Convert(1, w[0])
 	copy(x[0], w[1])
 	for i = 2; i < m; i++ {
 		nres_modmult(w[i-1], x[i-1], w[i])

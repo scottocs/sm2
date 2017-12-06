@@ -139,8 +139,8 @@ func Test_Range(x kdf.Big)int {
 	var one, decr_n kdf.Big
 	one = kdf.Mirvar(0)
 	decr_n = kdf.Mirvar(0)
-	kdf.convert(1, one)
-	kdf.decr(n, 1, decr_n)
+	kdf.Convert(1, one)
+	kdf.Decr(n, 1, decr_n)
 	if (kdf.Compare(x, one) < 0) || (kdf.Compare(x, decr_n) > 0) { //这里原本是(kdf.Compare(x, one) < 0) | (kdf.Compare(x, decr_n) > 0)
 		return 1
 	}
