@@ -1,5 +1,5 @@
 //2017年7月23日16:02:55 czn
-package main
+package kdf
 
 import (
 	"encoding/binary"
