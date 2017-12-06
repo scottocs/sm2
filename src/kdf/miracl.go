@@ -4,6 +4,20 @@ import (
 	"fmt"
 	"reflect"
 )
+var Para_p,Para_a,Para_b,Para_n,Para_Gx,Para_Gy,Para_h Big
+var ERR_NOT_VALID_POINT uint32 = 0x00000003
+
+
+var ERR_INFINITY_POINT uint32 = 0x00000001
+var ERR_NOT_VALID_ELEMENT uint32 = 0x00000002
+
+var ERR_ORDER uint32 = 0x00000004
+var ERR_ARRAY_NULL uint32 = 0x00000005
+var ERR_C3_MATCH uint32 = 0x00000006
+var ERR_Ecurve_INIT uint32 = 0x00000007
+var ERR_SELFTEST_KG uint32 = 0x00000008
+var ERR_SELFTEST_ENC uint32 = 0x00000009
+var ERR_SELFTEST_DEC uint32 = 0x0000000A
 type Bigtype struct {
 	len uint32
 	w   []uint32
@@ -125,21 +139,6 @@ func memcpy ( buf1 []uint8, buf2 []uint8,count int) {
 	}
 }
 
-func memcmp ( buf1 []uint8, buf2 []uint8,count int) int {
-
-	if count == 0{
-		return 0
-	}
-	var i int =0
-
-	for buf1[i] == buf2[i]  {
-		if i == count-1{
-			break
-		}
-		i ++
-	}
-	return int(buf1[i] - buf2[i])
-}
 func compare(x, y Big) int {
 	var m, n, sig int
 	var sx, sy uint32
@@ -257,7 +256,7 @@ func prepare_monty(n Big) uint32 { /* prepare Montgomery modulus */
 	return Mr_mip.ndash
 }
 
-func ecurve_init(a Big, b Big, p Big, type1 int) { /* Initialize the active ecurve    *
+func Ecurve_init(a Big, b Big, p Big, type1 int) { /* Initialize the active ecurve    *
 	 * Asize indicate size of A        *
 	 * Bsize indicate size of B        */
 	var as int
@@ -439,13 +438,13 @@ func Test_Point(point *Epoint) uint32 {
 	tmp = Mirvar(0)
 	//test if y^2=x^3+ax+b
 	Epoint_get(point, x, y)
-	Power(x, 3, para_p, x_3) //x_3=x^3 mod p
-	Multiply(x, para_a, x)   //x=a*x
-	Divide(x, para_p, tmp)   //x=a*x mod p , tmp=a*x/p
+	Power(x, 3, Para_p, x_3) //x_3=x^3 mod p
+	Multiply(x, Para_a, x)   //x=a*x
+	Divide(x, Para_p, tmp)   //x=a*x mod p , tmp=a*x/p
 	Add(x_3, x, x)           //x=x^3+ax
-	Add(x, para_b, x)        //x=x^3+ax+b
-	Divide(x, para_p, tmp)   //x=x^3+ax+b mod p
-	Power(y, 2, para_p, y)   //y=y^2 mod p
+	Add(x, Para_b, x)        //x=x^3+ax+b
+	Divide(x, Para_p, tmp)   //x=x^3+ax+b mod p
+	Power(y, 2, Para_p, y)   //y=y^2 mod p
 	if compare(x, y) != 0 {
 		return ERR_NOT_VALID_POINT
 	} else {
@@ -467,14 +466,14 @@ func Test_PubKey(pubKey *Epoint) uint32 {
 	}
 	//test if x<p and y<p both hold
 	Epoint_get(pubKey, x, y)
-	if (compare(x, para_p) != -1) || (compare(y, para_p) != -1) {
+	if (compare(x, Para_p) != -1) || (compare(y, Para_p) != -1) {
 		return ERR_NOT_VALID_ELEMENT
 	}
 	if Test_Point(pubKey) != 0 {
 		return ERR_NOT_VALID_POINT
 	}
 	//test if the order of pubKey is equal to n
-	Ecurve_mult(para_n, pubKey, nP) // nP=[n]P
+	Ecurve_mult(Para_n, pubKey, nP) // nP=[n]P
 	if Point_at_infinity(nP) == 0 { // if np is point NOT at infinity, return error;
 		return ERR_ORDER
 	}
